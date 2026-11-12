@@ -1,6 +1,11 @@
 extends RefCounted
 class_name EVEEWorldBuilder
 
+const PINE_TREE_MODEL = preload("res://assets/environment/kenney_nature/tree_pineTallA_detailed.glb")
+const OAK_TREE_MODEL = preload("res://assets/environment/kenney_nature/tree_oak.glb")
+const ROCK_MODEL = preload("res://assets/environment/kenney_nature/stone_largeA.glb")
+const BUSH_MODEL = preload("res://assets/environment/kenney_nature/plant_bushLarge.glb")
+
 static func build(parent: Node3D) -> void:
 	var env_node := WorldEnvironment.new()
 	var env := Environment.new()
@@ -350,10 +355,7 @@ static func _add_forest_biome(parent: Node3D) -> void:
 		segment.add_child(segment_collision)
 		parent.add_child(segment)
 
-	# Low-poly pine forest. Tree trunks share one static body to reduce physics overhead.
-	var trunk_material := _material(Color(0.24, 0.15, 0.09), 1.0)
-	var pine_material_a := _material(Color(0.08, 0.22, 0.13), 0.95)
-	var pine_material_b := _material(Color(0.12, 0.30, 0.17), 0.95)
+	# Kenney Nature Kit tree models with shared collision body for mobile-friendly physics.
 	var tree_collisions := StaticBody3D.new()
 	tree_collisions.name = "ForestTreeCollisions"
 	for row in range(6):
@@ -363,60 +365,52 @@ static func _add_forest_biome(parent: Node3D) -> void:
 		for column in range(14):
 			var x: float = 205.0 + float(column) * 19.0 + float((row % 2) * 7)
 			var variation: float = float((row * 7 + column * 3) % 5)
-			var tree_height: float = 8.0 + variation * 0.7
-			var trunk := MeshInstance3D.new()
-			var trunk_mesh := CylinderMesh.new()
-			trunk_mesh.top_radius = 0.28
-			trunk_mesh.bottom_radius = 0.42
-			trunk_mesh.height = tree_height * 0.55
-			trunk.mesh = trunk_mesh
-			trunk.position = Vector3(x, tree_height * 0.275, z)
-			trunk.material_override = trunk_material
-			parent.add_child(trunk)
-
-			var lower_crown := MeshInstance3D.new()
-			var lower_cone := ConeMesh.new()
-			lower_cone.top_radius = 0.15
-			lower_cone.bottom_radius = 2.7 + variation * 0.18
-			lower_cone.height = tree_height * 0.62
-			lower_crown.mesh = lower_cone
-			lower_crown.position = Vector3(x, tree_height * 0.62, z)
-			lower_crown.material_override = pine_material_a if (row + column) % 2 == 0 else pine_material_b
-			parent.add_child(lower_crown)
-
-			var upper_crown := MeshInstance3D.new()
-			var upper_cone := ConeMesh.new()
-			upper_cone.top_radius = 0.05
-			upper_cone.bottom_radius = 1.9 + variation * 0.12
-			upper_cone.height = tree_height * 0.48
-			upper_crown.mesh = upper_cone
-			upper_crown.position = Vector3(x, tree_height * 0.79, z)
-			upper_crown.material_override = pine_material_b if (row + column) % 2 == 0 else pine_material_a
-			parent.add_child(upper_crown)
+			var use_oak := (row + column) % 4 == 0
+			var tree_scene: PackedScene = OAK_TREE_MODEL if use_oak else PINE_TREE_MODEL
+			var tree_instance := tree_scene.instantiate() as Node3D
+			if tree_instance == null:
+				continue
+			tree_instance.name = "ForestOak" if use_oak else "ForestPine"
+			var tree_scale: float = (6.1 if use_oak else 5.0) + variation * 0.12
+			tree_instance.scale = Vector3.ONE * tree_scale
+			tree_instance.position = Vector3(x, 0.0, z)
+			tree_instance.rotation.y = float((row * 5 + column * 3) % 12) * 0.52
+			parent.add_child(tree_instance)
 
 			var trunk_collision := CollisionShape3D.new()
 			var trunk_shape := CylinderShape3D.new()
-			trunk_shape.radius = 0.48
-			trunk_shape.height = tree_height * 0.55
+			trunk_shape.radius = 0.52 if use_oak else 0.46
+			trunk_shape.height = 3.4
 			trunk_collision.shape = trunk_shape
-			trunk_collision.position = Vector3(x, tree_height * 0.275, z)
+			trunk_collision.position = Vector3(x, 1.7, z)
 			tree_collisions.add_child(trunk_collision)
 	parent.add_child(tree_collisions)
 
-	# Scattered stones add detail without filling the drivable trail.
-	var rock_material := _material(Color(0.27, 0.29, 0.25), 1.0)
+	# Low bushes sit around the outer forest edge, away from the drivable trail.
+	for i in range(12):
+		var bush := BUSH_MODEL.instantiate() as Node3D
+		if bush == null:
+			continue
+		bush.name = "ForestBush"
+		var bush_scale: float = 4.0 + float(i % 3) * 0.45
+		bush.scale = Vector3.ONE * bush_scale
+		var bush_z: float = -116.0 if i % 2 == 0 else 116.0
+		bush.position = Vector3(214.0 + float((i * 37) % 230), 0.0, bush_z)
+		bush.rotation.y = float(i) * 1.31
+		parent.add_child(bush)
+
+	# Kenney Nature Kit stones add varied forest-edge detail without runtime downloads.
 	for i in range(34):
-		var rock := MeshInstance3D.new()
-		var rock_mesh := SphereMesh.new()
-		rock_mesh.radius = 1.0
-		rock_mesh.height = 1.0
-		rock.mesh = rock_mesh
-		var rock_scale: float = 0.55 + float(i % 4) * 0.28
+		var rock := ROCK_MODEL.instantiate() as Node3D
+		if rock == null:
+			continue
+		rock.name = "ForestStone"
+		var rock_scale: float = 2.0 + float(i % 4) * 0.28
 		var rock_x: float = 205.0 + float((i * 29) % 245)
 		var rock_z: float = -112.0 + float((i * 47) % 225)
-		rock.scale = Vector3(rock_scale * 1.4, rock_scale * 0.8, rock_scale)
-		rock.position = Vector3(rock_x, rock_scale * 0.35, rock_z)
-		rock.material_override = rock_material
+		rock.scale = Vector3.ONE * rock_scale
+		rock.position = Vector3(rock_x, 0.0, rock_z)
+		rock.rotation.y = float(i) * 0.71
 		parent.add_child(rock)
 
 	# Simple trail reflectors mark the bends in low-visibility forest sections.
