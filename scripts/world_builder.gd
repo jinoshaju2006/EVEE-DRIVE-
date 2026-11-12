@@ -357,6 +357,8 @@ static func _add_forest_biome(parent: Node3D) -> void:
 	var tree_collisions := StaticBody3D.new()
 	tree_collisions.name = "ForestTreeCollisions"
 	for row in range(6):
+		if row == 2 or row == 3:
+			continue
 		var z: float = -108.0 + float(row) * 43.0
 		for column in range(14):
 			var x: float = 205.0 + float(column) * 19.0 + float((row % 2) * 7)
