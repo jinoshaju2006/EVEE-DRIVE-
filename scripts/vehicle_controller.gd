@@ -12,9 +12,31 @@ extends CharacterBody3D
 
 var forward_speed := 0.0
 var spawn_position := Vector3(0.0, 1.0, 0.0)
+var offroad_mode := false
+var road_max_speed := 42.0
+var road_acceleration := 25.0
+var road_steering_speed := 1.85
 
 func _ready() -> void:
 	spawn_position = global_position
+	road_max_speed = max_speed
+	road_acceleration = acceleration
+	road_steering_speed = steering_speed
+
+func set_offroad_mode(enabled: bool) -> void:
+	offroad_mode = enabled
+	if enabled:
+		max_speed = 30.0
+		acceleration = 20.0
+		steering_speed = 1.55
+		normal_grip = 0.72
+		handbrake_grip = 0.3
+	else:
+		max_speed = road_max_speed
+		acceleration = road_acceleration
+		steering_speed = road_steering_speed
+		normal_grip = 0.88
+		handbrake_grip = 0.22
 
 func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("reset_vehicle"):
