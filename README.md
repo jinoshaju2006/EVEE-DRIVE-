@@ -4,9 +4,11 @@ EVEE DRIVE is an Android-focused, open-world 3D driving game project built with 
 
 ## Current prototype features
 
-- Procedurally assembled test environment with a road and roadside markers
+- Procedurally generated 1.2 km city-road test area with road markings, buildings, trees and street lights
+- Lightweight ambient traffic cars moving through the test road
 - Placeholder 3D vehicle with body, wheels, headlights and rear lights
-- Basic acceleration, braking, reverse, steering and handbrake
+- Improved acceleration, braking, reverse, steering, lateral grip and handbrake handling
+- Vehicle recovery/reset button and R-key recovery
 - Third-person chase camera and first-person cockpit camera
 - On-screen mobile steering, accelerator, brake and handbrake controls
 - Speed display
@@ -17,7 +19,7 @@ EVEE DRIVE is an Android-focused, open-world 3D driving game project built with 
 
 ## Planned features
 
-- Larger explorable open-world map and road network
+- Larger explorable open-world map, intersections and connected road network
 - Improved vehicle physics, suspension, tire grip and transmission
 - Recorded and properly licensed engine, tire, road and environment sound libraries
 - Traffic AI, pedestrians, missions and challenges
@@ -51,4 +53,4 @@ The 144 FPS option sets a frame-rate cap. It does not guarantee 144 FPS on every
 
 ## Development status
 
-This repository contains an early playable-prototype code foundation. It has not yet been imported, run, profiled or exported to an APK in this development session. Do not treat it as a finished game or release build.
+This repository contains an early driving-game prototype with a generated city-road scene and ambient traffic. It has not yet been imported, run, profiled or exported to an APK in this development session. Do not treat it as a finished game or release build.
