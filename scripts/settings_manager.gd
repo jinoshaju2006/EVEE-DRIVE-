@@ -40,7 +40,7 @@ func apply_settings() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync_enabled else DisplayServer.VSYNC_DISABLED)
 	var bus := AudioServer.get_bus_index("Master")
 	if bus >= 0:
-		AudioServer.set_bus_volume_linear(bus, master_volume)
+		AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(master_volume, 0.0001)) if master_volume > 0.0 else -80.0)
 
 	var viewport := get_viewport()
 	match quality:
