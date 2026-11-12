@@ -37,6 +37,7 @@ func _ready() -> void:
 	_create_traffic()
 	_create_offroad_challenge()
 	_create_vehicle()
+	_apply_vehicle_paint(settings.vehicle_paint)
 	_create_cameras()
 	_create_audio()
 	_create_hud()
@@ -507,6 +508,8 @@ func _apply_vehicle_paint(paint_name: String) -> void:
 	selected_paint_color = paint_name
 	street_paint_material.albedo_color = paint_colors[paint_name]
 	jeep_paint_material.albedo_color = paint_colors[paint_name]
+	settings.vehicle_paint = paint_name
+	settings.save_settings()
 
 func _select_garage_vehicle(offroad: bool) -> void:
 	_set_vehicle_mode(offroad)
