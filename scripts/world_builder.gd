@@ -263,3 +263,30 @@ static func _add_offroad_region(parent: Node3D) -> void:
 		rock.position = Vector3(18.0 + float((i * 23) % 145), scale_value * 0.55, -112.0 + float((i * 31) % 220))
 		rock.material_override = rock_mat
 		parent.add_child(rock)
+
+	# Low, collision-backed dirt ramps sit in the open practice area beside the trail.
+	# They are deliberately separate from the checkpoint path so players can explore them.
+	var ramp_material := _material(Color(0.38, 0.27, 0.16), 1.0)
+	var ramp_positions: Array[Vector3] = [
+		Vector3(170.0, 0.55, -78.0),
+		Vector3(170.0, 0.55, 0.0),
+		Vector3(170.0, 0.55, 78.0)
+	]
+	var ramp_angles: Array[float] = [-0.10, 0.09, -0.08]
+	for i in range(ramp_positions.size()):
+		var ramp := StaticBody3D.new()
+		ramp.name = "DrivableDirtRamp_%02d" % (i + 1)
+		ramp.position = ramp_positions[i]
+		ramp.rotation.x = ramp_angles[i]
+		var ramp_mesh := MeshInstance3D.new()
+		var ramp_box := BoxMesh.new()
+		ramp_box.size = Vector3(12.0, 1.1, 22.0)
+		ramp_mesh.mesh = ramp_box
+		ramp_mesh.material_override = ramp_material
+		ramp.add_child(ramp_mesh)
+		var ramp_collision := CollisionShape3D.new()
+		var ramp_shape := BoxShape3D.new()
+		ramp_shape.size = ramp_box.size
+		ramp_collision.shape = ramp_shape
+		ramp.add_child(ramp_collision)
+		parent.add_child(ramp)
