@@ -2,39 +2,53 @@
 
 EVEE DRIVE is an Android-focused, open-world 3D driving game project built with Godot 4 and GDScript.
 
-## Project direction
+## Current prototype features
 
-- Android-first controls and performance
+- Procedurally assembled test environment with a road and roadside markers
+- Placeholder 3D vehicle with body, wheels, headlights and rear lights
+- Basic acceleration, braking, reverse, steering and handbrake
 - Third-person chase camera and first-person cockpit camera
-- Open-world free driving
-- Vehicle handling prototype, followed by improved suspension and physics
-- Traffic, missions, garages, vehicle selection and customization planned for later milestones
+- On-screen mobile steering, accelerator, brake and handbrake controls
+- Speed display
+- Graphics presets: Low, Medium, High and Ultra
+- Frame-rate cap options: 30, 60, 90, 120 and 144 FPS
+- Master audio volume control and saved settings
+- Synthesized engine-tone audio prototype
 
-## Current milestone: Foundation
+## Planned features
 
-This repository is being initialized with a playable foundation. The first prototype focuses on a generated test environment, a controllable placeholder vehicle, camera switching, and basic mobile-friendly controls.
+- Larger explorable open-world map and road network
+- Improved vehicle physics, suspension, tire grip and transmission
+- Recorded and properly licensed engine, tire, road and environment sound libraries
+- Traffic AI, pedestrians, missions and challenges
+- Vehicle selection, garage and customization
+- Dynamic weather and day/night cycle
+- Device-specific graphics optimization and Android release testing
 
-## Requirements
+## Technology
 
-- Godot Engine 4.x
-- Android export templates for APK builds
-- Android SDK/JDK configured in Godot for Android export
+- Engine: Godot 4.x
+- Language: GDScript
+- Target platform: Android
+- Renderer: Mobile-friendly GL Compatibility renderer
 
-## Run
+## Run in Godot
 
-1. Open the project folder in Godot 4.
-2. Open `project.godot`.
-3. Run the main scene.
+1. Install Godot 4.x.
+2. Open this repository folder in the Godot Project Manager.
+3. Import and open `project.godot`.
+4. Run the main scene.
 
-## Build status
+Keyboard controls: WASD or arrow keys to drive, Space for handbrake. Touch controls are shown in the game HUD.
 
-This is source code in active development. An installable APK will only be described as available after an Android export has been produced and tested.
+## Android export
 
-## Planned milestones
+See [Android build notes](docs/ANDROID_BUILD.md) for SDK, export-template and device-testing requirements.
 
-1. Core scene, vehicle controller and camera system
-2. Touch controls and Android input layout
-3. Larger procedural world and road network
-4. Vehicle selection, garage and customization
-5. Traffic, missions, audio and day/night cycle
-6. Android optimization, export and device testing
+## Performance note
+
+The 144 FPS option sets a frame-rate cap. It does not guarantee 144 FPS on every Android device. Actual performance depends on the device's display refresh rate, GPU/CPU, thermal limits and graphics settings.
+
+## Development status
+
+This repository contains an early playable-prototype code foundation. It has not yet been imported, run, profiled or exported to an APK in this development session. Do not treat it as a finished game or release build.
