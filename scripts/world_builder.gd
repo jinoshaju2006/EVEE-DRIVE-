@@ -59,6 +59,7 @@ static func build(parent: Node3D) -> void:
 	_add_city_blocks(parent)
 	_add_trees(parent)
 	_add_street_lights(parent)
+	_add_offroad_region(parent)
 
 static func _material(color: Color, roughness: float = 0.8, metallic: float = 0.0) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -159,3 +160,79 @@ static func _add_street_lights(parent: Node3D) -> void:
 			arm.position = Vector3(side * 7.45, 6.8, float(z))
 			arm.material_override = pole_mat
 			parent.add_child(arm)
+
+static func _add_offroad_region(parent: Node3D) -> void:
+	# Broad dirt driving area beside the paved city route.
+	var dirt := StaticBody3D.new()
+	dirt.name = "OffroadDirtField"
+	var dirt_mesh := MeshInstance3D.new()
+	var dirt_plane := PlaneMesh.new()
+	dirt_plane.size = Vector2(190.0, 250.0)
+	dirt_mesh.mesh = dirt_plane
+	dirt_mesh.position = Vector3(92.0, 0.025, 0.0)
+	dirt_mesh.material_override = _material(Color(0.34, 0.25, 0.15), 1.0)
+	dirt.add_child(dirt_mesh)
+	var dirt_collision := CollisionShape3D.new()
+	var dirt_shape := BoxShape3D.new()
+	dirt_shape.size = Vector3(190.0, 0.25, 250.0)
+	dirt_collision.shape = dirt_shape
+	dirt_collision.position = Vector3(92.0, -0.125, 0.0)
+	dirt.add_child(dirt_collision)
+	parent.add_child(dirt)
+
+	# Winding dirt trail made from connected, drivable track segments.
+	var track_points: Array[Vector3] = [
+		Vector3(8.0, 0.12, 0.0), Vector3(28.0, 0.12, -18.0),
+		Vector3(48.0, 0.12, -42.0), Vector3(78.0, 0.12, -52.0),
+		Vector3(112.0, 0.12, -35.0), Vector3(138.0, 0.12, -5.0),
+		Vector3(125.0, 0.12, 30.0), Vector3(92.0, 0.12, 48.0),
+		Vector3(58.0, 0.12, 35.0), Vector3(36.0, 0.12, 12.0)
+	]
+	var dirt_material := _material(Color(0.42, 0.29, 0.16), 1.0)
+	for i in range(track_points.size() - 1):
+		var a: Vector3 = track_points[i]
+		var b: Vector3 = track_points[i + 1]
+		var segment := StaticBody3D.new()
+		var mesh_instance := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		var length := Vector2(b.x - a.x, b.z - a.z).length()
+		box.size = Vector3(8.0, 0.22, length + 3.0)
+		mesh_instance.mesh = box
+		mesh_instance.position = (a + b) * 0.5
+		mesh_instance.rotation.y = atan2(b.x - a.x, b.z - a.z)
+		mesh_instance.material_override = dirt_material
+		segment.add_child(mesh_instance)
+		var collision := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = box.size
+		collision.shape = shape
+		collision.position = mesh_instance.position
+		collision.rotation.y = mesh_instance.rotation.y
+		segment.add_child(collision)
+		parent.add_child(segment)
+
+	# Low rolling mounds and rocky obstacles to make the route feel off-road.
+	var mound_mat := _material(Color(0.25, 0.22, 0.16), 1.0)
+	for i in range(12):
+		var mound := MeshInstance3D.new()
+		var sphere := SphereMesh.new()
+		sphere.radius = 1.0
+		sphere.height = 1.0
+		mound.mesh = sphere
+		mound.scale = Vector3(5.0 + float(i % 3), 1.8 + float(i % 2), 7.0 + float(i % 4))
+		mound.position = Vector3(55.0 + float((i * 19) % 95), 0.5, -100.0 + float((i * 37) % 190))
+		mound.material_override = mound_mat
+		parent.add_child(mound)
+
+	var rock_mat := _material(Color(0.26, 0.27, 0.25), 1.0)
+	for i in range(22):
+		var rock := MeshInstance3D.new()
+		var rock_mesh := SphereMesh.new()
+		rock_mesh.radius = 1.0
+		rock_mesh.height = 1.0
+		rock.mesh = rock_mesh
+		var scale_value := 0.8 + float(i % 4) * 0.35
+		rock.scale = Vector3(scale_value * 1.4, scale_value, scale_value)
+		rock.position = Vector3(18.0 + float((i * 23) % 145), scale_value * 0.55, -112.0 + float((i * 31) % 220))
+		rock.material_override = rock_mat
+		parent.add_child(rock)
