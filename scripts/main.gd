@@ -16,6 +16,9 @@ var settings: Node
 var engine_audio: Node
 var settings_panel: PanelContainer
 var traffic_manager: Node3D
+var road_visual_parts: Array[Node3D] = []
+var jeep_visual: Node3D
+var jeep_selected := false
 
 func _ready() -> void:
 	settings = SettingsManager.new()
@@ -50,6 +53,7 @@ func _create_vehicle() -> void:
 	paint.metallic = 0.72
 	paint.roughness = 0.24
 	body_mesh.material_override = paint
+	road_visual_parts.append(body_mesh)
 	body_mesh.position.y = 0.25
 	vehicle.add_child(body_mesh)
 
@@ -62,6 +66,7 @@ func _create_vehicle() -> void:
 	glass.metallic = 0.35
 	glass.roughness = 0.18
 	cabin_mesh.material_override = glass
+	road_visual_parts.append(cabin_mesh)
 	cabin_mesh.position = Vector3(0.0, 0.82, -0.15)
 	vehicle.add_child(cabin_mesh)
 
@@ -78,6 +83,7 @@ func _create_vehicle() -> void:
 			wheel_mesh.height = 0.34
 			wheel.mesh = wheel_mesh
 			wheel.material_override = tire_material
+			road_visual_parts.append(wheel)
 			wheel.rotation.z = PI / 2.0
 			wheel.position = Vector3(x, -0.12, z)
 			vehicle.add_child(wheel)
@@ -86,6 +92,7 @@ func _create_vehicle() -> void:
 		var headlight := OmniLight3D.new()
 		headlight.light_color = Color(0.72, 0.84, 1.0)
 		headlight.light_energy = 1.6
+		road_visual_parts.append(headlight)
 		headlight.omni_range = 10.0
 		headlight.position = Vector3(x, 0.35, -2.08)
 		vehicle.add_child(headlight)
@@ -99,6 +106,7 @@ func _create_vehicle() -> void:
 		tail_material.emission_enabled = true
 		tail_material.emission = Color(0.75, 0.015, 0.008)
 		taillight.material_override = tail_material
+		road_visual_parts.append(taillight)
 		taillight.position = Vector3(x, 0.35, 2.12)
 		vehicle.add_child(taillight)
 
@@ -109,6 +117,77 @@ func _create_vehicle() -> void:
 	collision.position.y = 0.35
 	vehicle.add_child(collision)
 	add_child(vehicle)
+	_create_jeep_visual()
+
+func _create_jeep_visual() -> void:
+	jeep_visual = Node3D.new()
+	jeep_visual.name = "OffroadJeepVisual"
+	var body := MeshInstance3D.new()
+	var body_mesh := BoxMesh.new()
+	body_mesh.size = Vector3(2.15, 0.82, 4.0)
+	body.mesh = body_mesh
+	var paint := StandardMaterial3D.new()
+	paint.albedo_color = Color(0.24, 0.32, 0.18)
+	paint.metallic = 0.25
+	paint.roughness = 0.62
+	body.material_override = paint
+	body.position.y = 0.48
+	jeep_visual.add_child(body)
+
+	var cabin := MeshInstance3D.new()
+	var cabin_mesh := BoxMesh.new()
+	cabin_mesh.size = Vector3(1.72, 0.95, 1.95)
+	cabin.mesh = cabin_mesh
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.025, 0.055, 0.07)
+	glass.metallic = 0.2
+	glass.roughness = 0.2
+	cabin.material_override = glass
+	cabin.position = Vector3(0.0, 1.32, -0.05)
+	jeep_visual.add_child(cabin)
+
+	var bumper := MeshInstance3D.new()
+	var bumper_mesh := BoxMesh.new()
+	bumper_mesh.size = Vector3(2.3, 0.22, 0.22)
+	bumper.mesh = bumper_mesh
+	bumper.position = Vector3(0.0, 0.22, -2.08)
+	jeep_visual.add_child(bumper)
+
+	var tire_mat := StandardMaterial3D.new()
+	tire_mat.albedo_color = Color(0.015, 0.018, 0.02)
+	tire_mat.roughness = 1.0
+	for x in [-1.12, 1.12]:
+		for z in [-1.35, 1.35]:
+			var wheel := MeshInstance3D.new()
+			var wheel_mesh := CylinderMesh.new()
+			wheel_mesh.top_radius = 0.62
+			wheel_mesh.bottom_radius = 0.62
+			wheel_mesh.height = 0.42
+			wheel.mesh = wheel_mesh
+			wheel.material_override = tire_mat
+			wheel.rotation.z = PI / 2.0
+			wheel.position = Vector3(x, -0.05, z)
+			jeep_visual.add_child(wheel)
+
+	var spare := MeshInstance3D.new()
+	var spare_mesh := CylinderMesh.new()
+	spare_mesh.top_radius = 0.48
+	spare_mesh.bottom_radius = 0.48
+	spare_mesh.height = 0.24
+	spare.mesh = spare_mesh
+	spare.material_override = tire_mat
+	spare.position = Vector3(0.0, 0.58, 2.08)
+	jeep_visual.add_child(spare)
+	jeep_visual.visible = false
+	vehicle.add_child(jeep_visual)
+
+func _set_vehicle_mode(offroad: bool) -> void:
+	jeep_selected = offroad
+	for part in road_visual_parts:
+		part.visible = not offroad
+	jeep_visual.visible = offroad
+	if vehicle.has_method("set_offroad_mode"):
+		vehicle.call("set_offroad_mode", offroad)
 
 func _create_cameras() -> void:
 	follow_camera = Camera3D.new()
@@ -177,6 +256,12 @@ func _create_hud() -> void:
 	reset_button.custom_minimum_size = Vector2(140.0, 58.0)
 	reset_button.pressed.connect(_reset_vehicle)
 	top.add_child(reset_button)
+
+	var vehicle_button := Button.new()
+	vehicle_button.text = "JEEP / CAR"
+	vehicle_button.custom_minimum_size = Vector2(150.0, 58.0)
+	vehicle_button.pressed.connect(_toggle_vehicle)
+	top.add_child(vehicle_button)
 
 	var camera_button := Button.new()
 	camera_button.text = "CAMERA"
@@ -302,6 +387,9 @@ func _create_settings_panel(layer: CanvasLayer) -> void:
 func _reset_vehicle() -> void:
 	if is_instance_valid(vehicle) and vehicle.has_method("_reset_vehicle"):
 		vehicle.call("_reset_vehicle")
+
+func _toggle_vehicle() -> void:
+	_set_vehicle_mode(not jeep_selected)
 
 func _toggle_camera() -> void:
 	use_cockpit = not use_cockpit
