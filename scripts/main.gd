@@ -116,6 +116,43 @@ func _create_vehicle() -> void:
 	cabin_mesh.position = Vector3(0.0, 0.82, -0.15)
 	vehicle.add_child(cabin_mesh)
 
+	# Four low-poly tire meshes and simple front/rear lighting for the prototype car.
+	var tire_material := StandardMaterial3D.new()
+	tire_material.albedo_color = Color(0.018, 0.02, 0.024)
+	tire_material.roughness = 0.92
+	for x in [-1.02, 1.02]:
+		for z in [-1.35, 1.35]:
+			var wheel := MeshInstance3D.new()
+			var wheel_mesh := CylinderMesh.new()
+			wheel_mesh.top_radius = 0.47
+			wheel_mesh.bottom_radius = 0.47
+			wheel_mesh.height = 0.34
+			wheel.mesh = wheel_mesh
+			wheel.material_override = tire_material
+			wheel.rotation.z = PI / 2.0
+			wheel.position = Vector3(x, -0.12, z)
+			vehicle.add_child(wheel)
+
+	for x in [-0.68, 0.68]:
+		var headlight := OmniLight3D.new()
+		headlight.light_color = Color(0.72, 0.84, 1.0)
+		headlight.light_energy = 1.6
+		headlight.omni_range = 10.0
+		headlight.position = Vector3(x, 0.35, -2.08)
+		vehicle.add_child(headlight)
+
+		var taillight := MeshInstance3D.new()
+		var tail_mesh := BoxMesh.new()
+		tail_mesh.size = Vector3(0.42, 0.12, 0.06)
+		taillight.mesh = tail_mesh
+		var tail_material := StandardMaterial3D.new()
+		tail_material.albedo_color = Color(0.85, 0.025, 0.018)
+		tail_material.emission_enabled = true
+		tail_material.emission = Color(0.75, 0.015, 0.008)
+		taillight.material_override = tail_material
+		taillight.position = Vector3(x, 0.35, 2.12)
+		vehicle.add_child(taillight)
+
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(2.0, 1.0, 4.2)
