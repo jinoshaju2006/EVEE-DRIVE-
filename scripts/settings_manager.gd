@@ -38,3 +38,22 @@ func apply_settings() -> void:
 	var bus := AudioServer.get_bus_index("Master")
 	if bus >= 0:
 		AudioServer.set_bus_volume_linear(bus, master_volume)
+
+	var viewport := get_viewport()
+	match quality:
+		"Low":
+			render_scale = 0.70
+			viewport.msaa_3d = Viewport.MSAA_DISABLED
+		"Medium":
+			render_scale = 0.85
+			viewport.msaa_3d = Viewport.MSAA_2X
+		"High":
+			render_scale = 1.0
+			viewport.msaa_3d = Viewport.MSAA_2X
+		"Ultra":
+			render_scale = 1.0
+			viewport.msaa_3d = Viewport.MSAA_4X
+		_:
+			render_scale = 1.0
+			viewport.msaa_3d = Viewport.MSAA_2X
+	viewport.scaling_3d_scale = render_scale
