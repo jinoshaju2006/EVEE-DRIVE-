@@ -290,3 +290,30 @@ static func _add_offroad_region(parent: Node3D) -> void:
 		ramp_collision.shape = ramp_shape
 		ramp.add_child(ramp_collision)
 		parent.add_child(ramp)
+	_add_offroad_ramps(parent)
+
+static func _add_offroad_ramps(parent: Node3D) -> void:
+	var ramp_material := _material(Color(0.38, 0.27, 0.16), 1.0)
+	var ramp_positions: Array[Vector3] = [
+		Vector3(170.0, 0.55, -78.0),
+		Vector3(170.0, 0.55, 0.0),
+		Vector3(170.0, 0.55, 78.0)
+	]
+	var ramp_angles: Array[float] = [-0.10, 0.09, -0.08]
+	for i in range(ramp_positions.size()):
+		var ramp := StaticBody3D.new()
+		ramp.name = "DrivableDirtRamp_%02d" % (i + 1)
+		ramp.position = ramp_positions[i]
+		ramp.rotation.x = ramp_angles[i]
+		var ramp_mesh := MeshInstance3D.new()
+		var ramp_box := BoxMesh.new()
+		ramp_box.size = Vector3(12.0, 1.1, 22.0)
+		ramp_mesh.mesh = ramp_box
+		ramp_mesh.material_override = ramp_material
+		ramp.add_child(ramp_mesh)
+		var ramp_collision := CollisionShape3D.new()
+		var ramp_shape := BoxShape3D.new()
+		ramp_shape.size = ramp_box.size
+		ramp_collision.shape = ramp_shape
+		ramp.add_child(ramp_collision)
+		parent.add_child(ramp)
