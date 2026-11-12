@@ -507,6 +507,7 @@ func _apply_vehicle_paint(paint_name: String) -> void:
 func _select_garage_vehicle(offroad: bool) -> void:
 	_set_vehicle_mode(offroad)
 	garage_panel.visible = false
+	vehicle.set_physics_process(true)
 	if is_instance_valid(challenge_label):
 		challenge_label.text = "TRAIL JEEP SELECTED" if offroad else "STREET CAR SELECTED"
 
@@ -530,5 +531,6 @@ func _toggle_camera() -> void:
 
 func _toggle_settings() -> void:
 	settings_panel.visible = not settings_panel.visible
-	if settings_panel.visible:
+	if settings_panel.visible and garage_panel.visible:
 		garage_panel.visible = false
+		vehicle.set_physics_process(true)
