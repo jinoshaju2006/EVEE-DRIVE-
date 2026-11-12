@@ -3,7 +3,7 @@ class_name EVEESettings
 
 const SAVE_PATH := "user://evee_drive_settings.cfg"
 
-var quality := "High"
+var quality := "Medium"
 var target_fps := 60
 var render_scale := 1.0
 var master_volume := 0.8
