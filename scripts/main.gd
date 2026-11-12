@@ -292,6 +292,16 @@ func _create_settings_panel(layer: CanvasLayer) -> void:
 	)
 	layout.add_child(volume)
 
+	var vsync := CheckBox.new()
+	vsync.text = "Vertical sync"
+	vsync.button_pressed = settings.vsync_enabled
+	vsync.toggled.connect(func(enabled: bool):
+		settings.vsync_enabled = enabled
+		settings.apply_settings()
+		settings.save_settings()
+	)
+	layout.add_child(vsync)
+
 	var close_button := Button.new()
 	close_button.text = "RESUME DRIVING"
 	close_button.pressed.connect(_toggle_settings)
