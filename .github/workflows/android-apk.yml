@@ -75,9 +75,15 @@ jobs:
         run: godot --headless --editor --path . --quit
 
       - name: Export debug APK
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.temp }}/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p build
-          godot --headless --path . --export-debug "Android" build/EVEE-DRIVE-debug.apk
+          cp "$HOME/.android/debug.keystore" "$RUNNER_TEMP/debug.keystore"
+          godot --headless --verbose --path . --export-debug "Android" build/EVEE-DRIVE-debug.apk
+          test -s build/EVEE-DRIVE-debug.apk
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
