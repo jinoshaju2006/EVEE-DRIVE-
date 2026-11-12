@@ -1,15 +1,24 @@
 # Android build notes
 
-EVEE DRIVE is configured as an Android-first Godot 4 project. An APK is not included yet.
+EVEE DRIVE now has a GitHub Actions workflow configured to attempt a **debug APK** build. A successful workflow run will publish the APK as a downloadable Actions artifact; it is not a Play Store release.
 
-## Required local setup
+## Downloading the APK artifact
 
-1. Install a current Godot 4.x stable release.
-2. Install matching Godot export templates from the editor.
-3. Install Android Studio and the Android SDK platform/build tools required by that Godot release.
-4. Configure the Java SDK path and Android SDK path in Editor Settings > Export > Android.
-5. Open Project > Export, add an Android preset, and configure the package name and app icon.
-6. Export a debug APK first and test it on a physical Android device.
+1. Open the repository's **Actions** tab.
+2. Select **Android debug APK**.
+3. Open the latest successful run.
+4. Find **Artifacts** at the bottom and download **EVEE-DRIVE-debug-apk**.
+5. Extract the downloaded ZIP to obtain `EVEE-DRIVE-debug.apk`.
+
+The workflow runs automatically on relevant game-source changes to `main), and can also be started manually with **Run workflow**. It uses Godot 4.3.0, Android SDK API 34, Java 17 and an ARM64 debug export. The first run may fail if an export-template or SDK setting needs adjustment; check the run log before treating an APK as available.
+
+## Local Android export
+
+1. Install Godot 4.3.0 and its matching export templates.
+2. Install Android Studio and the Android SDK platform/build tools.
+3. Configure the Java SDK path and Android SDK path in Editor Settings > Export > Android.
+4. Open Project > Export and confirm the Android preset.
+5. Export a debug APK and test it on a physical Android device.
 
 ## Performance targets
 
@@ -34,10 +43,10 @@ The current prototype uses a synthesized engine-tone loop to validate runtime au
 
 ## Validation checklist
 
-- Import the project in the selected Godot 4.x version.
+- Import the project in the selected Godot version.
 - Run the main scene and check the debugger for script/resource errors.
 - Test touch buttons, camera switching and the on-screen vehicle reset button on an Android touchscreen.
 - Check frame pacing and thermal behavior during longer drives with traffic enabled.
 - Verify settings persist after restarting the app.
-- Export and install a debug APK.
+- Install and test the debug APK on target Android hardware.
 - Test all frame-rate caps and graphics presets on target hardware.
