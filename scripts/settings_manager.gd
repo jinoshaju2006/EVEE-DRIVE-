@@ -8,6 +8,7 @@ var target_fps := 60
 var render_scale := 1.0
 var master_volume := 0.8
 var vsync_enabled := true
+var vehicle_paint := "PURPLE"
 
 func _ready() -> void:
 	load_settings()
@@ -22,6 +23,7 @@ func load_settings() -> void:
 	render_scale = float(config.get_value("graphics", "render_scale", render_scale))
 	master_volume = float(config.get_value("audio", "master_volume", master_volume))
 	vsync_enabled = bool(config.get_value("graphics", "vsync", vsync_enabled))
+	vehicle_paint = str(config.get_value("vehicle", "paint", vehicle_paint))
 
 func save_settings() -> void:
 	var config := ConfigFile.new()
@@ -30,6 +32,7 @@ func save_settings() -> void:
 	config.set_value("graphics", "render_scale", render_scale)
 	config.set_value("graphics", "vsync", vsync_enabled)
 	config.set_value("audio", "master_volume", master_volume)
+	config.set_value("vehicle", "paint", vehicle_paint)
 	config.save(SAVE_PATH)
 
 func apply_settings() -> void:
