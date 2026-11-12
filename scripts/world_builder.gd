@@ -121,7 +121,7 @@ static func _add_trees(parent: Node3D) -> void:
 	for side in [-1.0, 1.0]:
 		for i in range(30):
 			var z := -570.0 + float(i) * 38.0
-			var x := side * (10.5 + float((i % 3) * 1.5))
+			var x: float = float(side) * (10.5 + float((i % 3) * 1.5))
 			var trunk := MeshInstance3D.new()
 			var trunk_mesh := CylinderMesh.new()
 			trunk_mesh.top_radius = 0.22
