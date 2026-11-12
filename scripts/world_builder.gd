@@ -211,6 +211,33 @@ static func _add_offroad_region(parent: Node3D) -> void:
 		segment.add_child(collision)
 		parent.add_child(segment)
 
+	# Reflective trail posts make the dirt route easier to read at speed.
+	var post_material := _material(Color(0.88, 0.72, 0.28), 0.55, 0.12)
+	var reflector_material := _material(Color(0.92, 0.94, 0.86), 0.35)
+	for i in range(1, track_points.size() - 1):
+		var previous: Vector3 = track_points[i - 1]
+		var following: Vector3 = track_points[i + 1]
+		var direction := Vector2(following.x - previous.x, following.z - previous.z).normalized()
+		var side_offset := Vector3(-direction.y, 0.0, direction.x) * 5.2
+		for side_sign in [-1.0, 1.0]:
+			var post_position: Vector3 = track_points[i] + side_offset * side_sign
+			var post := MeshInstance3D.new()
+			var post_mesh := CylinderMesh.new()
+			post_mesh.top_radius = 0.055
+			post_mesh.bottom_radius = 0.075
+			post_mesh.height = 1.15
+			post.mesh = post_mesh
+			post.position = post_position + Vector3(0.0, 0.575, 0.0)
+			post.material_override = post_material
+			parent.add_child(post)
+			var reflector := MeshInstance3D.new()
+			var reflector_mesh := BoxMesh.new()
+			reflector_mesh.size = Vector3(0.16, 0.12, 0.08)
+			reflector.mesh = reflector_mesh
+			reflector.position = post_position + Vector3(0.0, 0.78, 0.0)
+			reflector.material_override = reflector_material
+			parent.add_child(reflector)
+
 	# Low rolling mounds and rocky obstacles to make the route feel off-road.
 	var mound_mat := _material(Color(0.25, 0.22, 0.16), 1.0)
 	for i in range(12):
