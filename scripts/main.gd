@@ -136,6 +136,37 @@ func _create_vehicle() -> void:
 		taillight.position = Vector3(x, 0.35, 2.12)
 		road_visual_root.add_child(taillight)
 
+	# Simple aero details to give the street-car placeholder a sportier silhouette.
+	var aero_material := StandardMaterial3D.new()
+	aero_material.albedo_color = Color(0.018, 0.022, 0.03)
+	aero_material.metallic = 0.58
+	aero_material.roughness = 0.3
+	var front_lip := MeshInstance3D.new()
+	var front_lip_mesh := BoxMesh.new()
+	front_lip_mesh.size = Vector3(2.12, 0.09, 0.42)
+	front_lip.mesh = front_lip_mesh
+	front_lip.material_override = aero_material
+	front_lip.position = Vector3(0.0, -0.02, -2.02)
+	road_visual_parts.append(front_lip)
+	road_visual_root.add_child(front_lip)
+	var rear_spoiler := MeshInstance3D.new()
+	var spoiler_mesh := BoxMesh.new()
+	spoiler_mesh.size = Vector3(1.72, 0.10, 0.34)
+	rear_spoiler.mesh = spoiler_mesh
+	rear_spoiler.material_override = aero_material
+	rear_spoiler.position = Vector3(0.0, 0.76, 1.78)
+	road_visual_parts.append(rear_spoiler)
+	road_visual_root.add_child(rear_spoiler)
+	for side in [-1.0, 1.0]:
+		var mirror := MeshInstance3D.new()
+		var mirror_mesh := BoxMesh.new()
+		mirror_mesh.size = Vector3(0.22, 0.16, 0.28)
+		mirror.mesh = mirror_mesh
+		mirror.material_override = aero_material
+		mirror.position = Vector3(side * 0.92, 0.78, -0.55)
+		road_visual_parts.append(mirror)
+		road_visual_root.add_child(mirror)
+
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(2.0, 1.0, 4.2)
@@ -195,6 +226,45 @@ func _create_jeep_visual() -> void:
 			wheel.rotation.z = PI / 2.0
 			wheel.position = Vector3(x, -0.05, z)
 			jeep_visual.add_child(wheel)
+
+	# Off-road equipment: roof rack, front grille, headlamps and side steps.
+	var trim_mat := StandardMaterial3D.new()
+	trim_mat.albedo_color = Color(0.035, 0.045, 0.04)
+	trim_mat.metallic = 0.42
+	trim_mat.roughness = 0.55
+	var grille := MeshInstance3D.new()
+	var grille_mesh := BoxMesh.new()
+	grille_mesh.size = Vector3(0.92, 0.34, 0.08)
+	grille.mesh = grille_mesh
+	grille.material_override = trim_mat
+	grille.position = Vector3(0.0, 0.48, -2.045)
+	jeep_visual.add_child(grille)
+	for side in [-1.0, 1.0]:
+		var lamp := MeshInstance3D.new()
+		var lamp_mesh := BoxMesh.new()
+		lamp_mesh.size = Vector3(0.32, 0.24, 0.09)
+		lamp.mesh = lamp_mesh
+		var lamp_mat := StandardMaterial3D.new()
+		lamp_mat.albedo_color = Color(0.88, 0.82, 0.58)
+		lamp_mat.emission_enabled = true
+		lamp_mat.emission = Color(0.32, 0.25, 0.10)
+		lamp.material_override = lamp_mat
+		lamp.position = Vector3(side * 0.78, 0.55, -2.05)
+		jeep_visual.add_child(lamp)
+		var side_step := MeshInstance3D.new()
+		var step_mesh := BoxMesh.new()
+		step_mesh.size = Vector3(0.22, 0.12, 2.25)
+		side_step.mesh = step_mesh
+		side_step.material_override = trim_mat
+		side_step.position = Vector3(side * 1.13, 0.10, 0.0)
+		jeep_visual.add_child(side_step)
+	var roof_rack := MeshInstance3D.new()
+	var rack_mesh := BoxMesh.new()
+	rack_mesh.size = Vector3(1.82, 0.12, 2.15)
+	roof_rack.mesh = rack_mesh
+	roof_rack.material_override = trim_mat
+	roof_rack.position = Vector3(0.0, 1.86, -0.05)
+	jeep_visual.add_child(roof_rack)
 
 	var spare := MeshInstance3D.new()
 	var spare_mesh := CylinderMesh.new()
