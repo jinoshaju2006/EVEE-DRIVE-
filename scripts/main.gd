@@ -9,6 +9,9 @@ const TrafficManager = preload("res://scripts/traffic_manager.gd")
 const OffroadChallenge = preload("res://scripts/offroad_challenge.gd")
 const STREET_MODEL = preload("res://assets/vehicles/kenney/sedanSports.glb")
 const OFFROAD_MODEL = preload("res://assets/vehicles/kenney/suv.glb")
+const RACE_MODEL = preload("res://assets/vehicles/kenney/race.glb")
+const TRUCK_MODEL = preload("res://assets/vehicles/kenney/truck.glb")
+const VAN_MODEL = preload("res://assets/vehicles/kenney/van.glb")
 
 var vehicle: CharacterBody3D
 var follow_camera: Camera3D
@@ -29,6 +32,11 @@ var garage_panel: PanelContainer
 var jeep_visual: Node3D
 var street_asset_visual: Node3D
 var offroad_asset_visual: Node3D
+var race_asset_visual: Node3D
+var truck_asset_visual: Node3D
+var van_asset_visual: Node3D
+var vehicle_asset_visuals: Array[Node3D] = []
+var current_vehicle_id := "sports"
 var jeep_selected := false
 var street_paint_material: StandardMaterial3D
 var jeep_paint_material: StandardMaterial3D
@@ -284,27 +292,51 @@ func _create_jeep_visual() -> void:
 	road_visual_root.add_child(jeep_visual)
 
 func _create_vehicle_asset_visuals() -> void:
-	street_asset_visual = STREET_MODEL.instantiate() as Node3D
-	street_asset_visual.name = "KenneySportsSedan"
-	street_asset_visual.position.y = -0.25
-	road_visual_root.add_child(street_asset_visual)
+	street_asset_visual = _add_vehicle_asset(STREET_MODEL, "KenneySportsSedan", -0.25, 1.0)
+	offroad_asset_visual = _add_vehicle_asset(OFFROAD_MODEL, "KenneyTrailSUV", -0.22, 0.88)
+	race_asset_visual = _add_vehicle_asset(RACE_MODEL, "KenneyRaceCar", -0.22, 1.0)
+	truck_asset_visual = _add_vehicle_asset(TRUCK_MODEL, "KenneyPickupTruck", -0.22, 0.9)
+	van_asset_visual = _add_vehicle_asset(VAN_MODEL, "KenneyVan", -0.22, 0.9)
+	_set_vehicle_mode(false)
 
-	offroad_asset_visual = OFFROAD_MODEL.instantiate() as Node3D
-	offroad_asset_visual.name = "KenneyTrailSUV"
-	offroad_asset_visual.scale = Vector3(0.88, 0.88, 0.88)
-	offroad_asset_visual.position.y = -0.22
-	offroad_asset_visual.visible = false
-	road_visual_root.add_child(offroad_asset_visual)
+func _add_vehicle_asset(model: PackedScene, node_name: String, y_offset: float, model_scale: float) -> Node3D:
+	var instance := model.instantiate() as Node3D
+	if instance == null:
+		push_warning("Could not instance vehicle asset: " + node_name)
+		return Node3D.new()
+	instance.name = node_name
+	instance.position.y = y_offset
+	instance.scale = Vector3.ONE * model_scale
+	instance.visible = false
+	road_visual_root.add_child(instance)
+	vehicle_asset_visuals.append(instance)
+	return instance
 
 func _set_vehicle_mode(offroad: bool) -> void:
-	jeep_selected = offroad
+	_select_vehicle_visual("suv" if offroad else "sports")
+
+func _select_vehicle_visual(vehicle_id: String) -> void:
+	current_vehicle_id = vehicle_id
+	jeep_selected = vehicle_id == "suv"
 	for part in road_visual_parts:
 		part.visible = false
-	jeep_visual.visible = false
-	street_asset_visual.visible = not offroad
-	offroad_asset_visual.visible = offroad
+	if is_instance_valid(jeep_visual):
+		jeep_visual.visible = false
+	for asset in vehicle_asset_visuals:
+		asset.visible = false
+	match vehicle_id:
+		"sports":
+			street_asset_visual.visible = true
+		"suv":
+			offroad_asset_visual.visible = true
+		"race":
+			race_asset_visual.visible = true
+		"truck":
+			truck_asset_visual.visible = true
+		"van":
+			van_asset_visual.visible = true
 	if vehicle.has_method("set_offroad_mode"):
-		vehicle.call("set_offroad_mode", offroad)
+		vehicle.call("set_offroad_mode", jeep_selected)
 
 func _create_cameras() -> void:
 	follow_camera = Camera3D.new()
@@ -557,31 +589,33 @@ func _create_garage_panel(layer: CanvasLayer) -> void:
 	garage_panel.set_anchors_preset(Control.PRESET_CENTER)
 	garage_panel.offset_left = -220.0
 	garage_panel.offset_right = 220.0
-	garage_panel.offset_top = -205.0
-	garage_panel.offset_bottom = 205.0
+	garage_panel.offset_top = -250.0
+	garage_panel.offset_bottom = 250.0
 	layer.add_child(garage_panel)
 
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 14)
+	layout.add_theme_constant_override("separation", 8)
 	garage_panel.add_child(layout)
 
 	var heading := Label.new()
-	heading.text = "EVEE GARAGE"
+	heading.text = "EVEE GARAGE  •  MIXED FLEET"
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	heading.add_theme_font_size_override("font_size", 26)
+	heading.add_theme_font_size_override("font_size", 24)
 	layout.add_child(heading)
 
-	var car_button := Button.new()
-	car_button.text = "STREET CAR  •  ROAD SETUP"
-	car_button.custom_minimum_size = Vector2(360.0, 64.0)
-	car_button.pressed.connect(func(): _select_garage_vehicle(false))
-	layout.add_child(car_button)
-
-	var jeep_button := Button.new()
-	jeep_button.text = "TRAIL JEEP  •  OFF-ROAD SETUP"
-	jeep_button.custom_minimum_size = Vector2(360.0, 64.0)
-	jeep_button.pressed.connect(func(): _select_garage_vehicle(true))
-	layout.add_child(jeep_button)
+	var vehicle_choices := [
+		["SPORTS CAR  •  ROAD", "sports"],
+		["RACE CAR  •  ROAD", "race"],
+		["OFF-ROAD SUV  •  TRAIL", "suv"],
+		["PICKUP TRUCK  •  UTILITY", "truck"],
+		["VAN  •  ROAD", "van"]
+	]
+	for choice in vehicle_choices:
+		var vehicle_button := Button.new()
+		vehicle_button.text = choice[0]
+		vehicle_button.custom_minimum_size = Vector2(360.0, 48.0)
+		vehicle_button.pressed.connect(_select_garage_vehicle_by_id.bind(choice[1]))
+		layout.add_child(vehicle_button)
 
 	var paint_heading := Label.new()
 	paint_heading.text = "PAINT COLOUR"
@@ -593,7 +627,7 @@ func _create_garage_panel(layer: CanvasLayer) -> void:
 	for paint_name in ["PURPLE", "BLACK", "WHITE", "RED"]:
 		var paint_button := Button.new()
 		paint_button.text = paint_name
-		paint_button.custom_minimum_size = Vector2(88.0, 52.0)
+		paint_button.custom_minimum_size = Vector2(88.0, 44.0)
 		paint_button.pressed.connect(_apply_vehicle_paint.bind(paint_name))
 		paint_row.add_child(paint_button)
 	layout.add_child(paint_row)
@@ -627,8 +661,8 @@ func _apply_vehicle_paint(paint_name: String) -> void:
 	selected_paint_color = paint_name
 	street_paint_material.albedo_color = paint_colors[paint_name]
 	jeep_paint_material.albedo_color = paint_colors[paint_name]
-	_apply_model_paint(street_asset_visual, paint_colors[paint_name])
-	_apply_model_paint(offroad_asset_visual, paint_colors[paint_name])
+	for asset in vehicle_asset_visuals:
+		_apply_model_paint(asset, paint_colors[paint_name])
 	settings.vehicle_paint = paint_name
 	settings.save_settings()
 
@@ -647,11 +681,14 @@ func _apply_model_paint(root: Node3D, color: Color) -> void:
 				mesh_instance.set_surface_override_material(surface, paint_material)
 
 func _select_garage_vehicle(offroad: bool) -> void:
-	_set_vehicle_mode(offroad)
+	_select_garage_vehicle_by_id("suv" if offroad else "sports")
+
+func _select_garage_vehicle_by_id(vehicle_id: String) -> void:
+	_select_vehicle_visual(vehicle_id)
 	garage_panel.visible = false
 	_update_vehicle_pause_state()
 	if is_instance_valid(challenge_label):
-		challenge_label.text = "TRAIL JEEP SELECTED" if offroad else "STREET CAR SELECTED"
+		challenge_label.text = vehicle_id.to_upper() + " SELECTED"
 
 func _reset_vehicle() -> void:
 	if is_instance_valid(vehicle) and vehicle.has_method("_reset_vehicle"):
@@ -661,7 +698,7 @@ func _toggle_vehicle() -> void:
 	_set_vehicle_mode(not jeep_selected)
 
 func _start_hill_climb() -> void:
-	_set_vehicle_mode(true)
+	_select_vehicle_visual("suv")
 	offroad_challenge.start_challenge()
 
 func _on_challenge_progress(message: String) -> void:
