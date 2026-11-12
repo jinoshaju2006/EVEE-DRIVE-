@@ -292,7 +292,7 @@ func _create_settings_panel(layer: CanvasLayer) -> void:
 	var quality := OptionButton.new()
 	for item in ["Low", "Medium", "High", "Ultra"]:
 		quality.add_item(item)
-	quality.select(2)
+	quality.select(maxi(0, ["Low", "Medium", "High", "Ultra"].find(settings.quality)))
 	quality.item_selected.connect(func(index: int):
 		settings.quality = quality.get_item_text(index)
 		settings.apply_settings()
@@ -306,7 +306,7 @@ func _create_settings_panel(layer: CanvasLayer) -> void:
 	var fps := OptionButton.new()
 	for rate in [30, 60, 90, 120, 144]:
 		fps.add_item("%d FPS" % rate)
-	fps.select(1)
+	fps.select(maxi(0, [30, 60, 90, 120, 144].find(settings.target_fps)))
 	fps.item_selected.connect(func(index: int):
 		settings.target_fps = [30, 60, 90, 120, 144][index]
 		settings.apply_settings()
