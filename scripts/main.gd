@@ -21,6 +21,7 @@ var road_visual_parts: Array[Node3D] = []
 var road_visual_root: Node3D
 var suspension_phase := 0.0
 var road_wheels: Array[MeshInstance3D] = []
+var brake_light_materials: Array[StandardMaterial3D] = []
 var jeep_wheels: Array[MeshInstance3D] = []
 var garage_panel: PanelContainer
 var jeep_visual: Node3D
@@ -130,6 +131,7 @@ func _create_vehicle() -> void:
 		tail_material.emission_enabled = true
 		tail_material.emission = Color(0.75, 0.015, 0.008)
 		taillight.material_override = tail_material
+		brake_light_materials.append(tail_material)
 		road_visual_parts.append(taillight)
 		taillight.position = Vector3(x, 0.35, 2.12)
 		road_visual_root.add_child(taillight)
@@ -237,6 +239,9 @@ func _process(delta: float) -> void:
 	var speed := absf(vehicle.velocity.length()) * 3.6
 	speed_label.text = "%03d km/h" % int(speed)
 	engine_audio.set_load(clampf(speed / 120.0, 0.0, 1.0))
+	var brake_level := Input.get_action_strength("brake")
+	for light_material in brake_light_materials:
+		light_material.emission_energy_multiplier = 0.8 + brake_level * 2.8
 	var ui_is_open := (is_instance_valid(garage_panel) and garage_panel.visible) or (is_instance_valid(settings_panel) and settings_panel.visible)
 	if not ui_is_open:
 		var speed_ratio := clampf(speed / (30.0 if jeep_selected else 42.0), 0.0, 1.0)
