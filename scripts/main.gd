@@ -4,6 +4,8 @@ const VehicleController = preload("res://scripts/vehicle_controller.gd")
 const MobileControls = preload("res://scripts/mobile_controls.gd")
 const EngineAudio = preload("res://scripts/engine_audio.gd")
 const SettingsManager = preload("res://scripts/settings_manager.gd")
+const WorldBuilder = preload("res://scripts/world_builder.gd")
+const TrafficManager = preload("res://scripts/traffic_manager.gd")
 
 var vehicle: CharacterBody3D
 var follow_camera: Camera3D
@@ -13,78 +15,25 @@ var speed_label: Label
 var settings: Node
 var engine_audio: Node
 var settings_panel: PanelContainer
+var traffic_manager: Node3D
 
 func _ready() -> void:
 	settings = SettingsManager.new()
 	add_child(settings)
 	_create_world()
+	_create_traffic()
 	_create_vehicle()
 	_create_cameras()
 	_create_audio()
 	_create_hud()
 
 func _create_world() -> void:
-	var world_environment := WorldEnvironment.new()
-	var environment := Environment.new()
-	environment.background_mode = Environment.BG_SKY
-	environment.sky = Sky.new()
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.62, 0.68, 0.78)
-	environment.ambient_light_energy = 0.8
-	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	environment.glow_enabled = true
-	environment.glow_intensity = 0.35
-	world_environment.environment = environment
-	add_child(world_environment)
+	WorldBuilder.build(self)
 
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-48.0, -28.0, 0.0)
-	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 100.0
-	add_child(sun)
-
-	var ground := StaticBody3D.new()
-	ground.name = "Ground"
-	var ground_mesh := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(500.0, 500.0)
-	ground_mesh.mesh = plane
-	var ground_material := StandardMaterial3D.new()
-	ground_material.albedo_color = Color(0.12, 0.19, 0.16)
-	ground_material.roughness = 1.0
-	ground_mesh.material_override = ground_material
-	ground.add_child(ground_mesh)
-	var ground_collision := CollisionShape3D.new()
-	var ground_shape := BoxShape3D.new()
-	ground_shape.size = Vector3(500.0, 0.2, 500.0)
-	ground_collision.shape = ground_shape
-	ground_collision.position.y = -0.1
-	ground.add_child(ground_collision)
-	add_child(ground)
-
-	var road := MeshInstance3D.new()
-	var road_mesh := BoxMesh.new()
-	road_mesh.size = Vector3(12.0, 0.08, 240.0)
-	road.mesh = road_mesh
-	road.position = Vector3(0.0, 0.02, -40.0)
-	var road_material := StandardMaterial3D.new()
-	road_material.albedo_color = Color(0.075, 0.085, 0.10)
-	road_material.roughness = 0.95
-	road.material_override = road_material
-	add_child(road)
-
-	# Road edge markers make the first test track easier to read.
-	for side in [-1.0, 1.0]:
-		for z in range(-150, 90, 12):
-			var marker := MeshInstance3D.new()
-			var marker_mesh := BoxMesh.new()
-			marker_mesh.size = Vector3(0.18, 0.12, 3.0)
-			marker.mesh = marker_mesh
-			marker.position = Vector3(side * 5.65, 0.12, float(z))
-			var marker_material := StandardMaterial3D.new()
-			marker_material.albedo_color = Color(0.82, 0.82, 0.78)
-			marker.material_override = marker_material
-			add_child(marker)
+func _create_traffic() -> void:
+	traffic_manager = TrafficManager.new()
+	traffic_manager.name = "AmbientTraffic"
+	add_child(traffic_manager)
 
 func _create_vehicle() -> void:
 	vehicle = CharacterBody3D.new()
