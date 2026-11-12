@@ -18,6 +18,8 @@ var engine_audio: Node
 var settings_panel: PanelContainer
 var traffic_manager: Node3D
 var road_visual_parts: Array[Node3D] = []
+var road_visual_root: Node3D
+var suspension_phase := 0.0
 var road_wheels: Array[MeshInstance3D] = []
 var jeep_wheels: Array[MeshInstance3D] = []
 var garage_panel: PanelContainer
@@ -61,6 +63,9 @@ func _create_vehicle() -> void:
 	vehicle.name = "PlayerVehicle"
 	vehicle.position = Vector3(0.0, 1.0, 0.0)
 	vehicle.set_script(VehicleController)
+	road_visual_root = Node3D.new()
+	road_visual_root.name = "VehicleVisualRoot"
+	vehicle.add_child(road_visual_root)
 
 	var body_mesh := MeshInstance3D.new()
 	var body := BoxMesh.new()
@@ -73,7 +78,7 @@ func _create_vehicle() -> void:
 	body_mesh.material_override = street_paint_material
 	road_visual_parts.append(body_mesh)
 	body_mesh.position.y = 0.25
-	vehicle.add_child(body_mesh)
+	road_visual_root.add_child(body_mesh)
 
 	var cabin_mesh := MeshInstance3D.new()
 	var cabin := BoxMesh.new()
@@ -86,7 +91,7 @@ func _create_vehicle() -> void:
 	cabin_mesh.material_override = glass
 	road_visual_parts.append(cabin_mesh)
 	cabin_mesh.position = Vector3(0.0, 0.82, -0.15)
-	vehicle.add_child(cabin_mesh)
+	road_visual_root.add_child(cabin_mesh)
 
 	# Four low-poly tire meshes and simple front/rear lighting for the prototype car.
 	var tire_material := StandardMaterial3D.new()
@@ -105,7 +110,7 @@ func _create_vehicle() -> void:
 			road_wheels.append(wheel)
 			wheel.rotation.z = PI / 2.0
 			wheel.position = Vector3(x, -0.12, z)
-			vehicle.add_child(wheel)
+			road_visual_root.add_child(wheel)
 
 	for x in [-0.68, 0.68]:
 		var headlight := OmniLight3D.new()
@@ -114,7 +119,7 @@ func _create_vehicle() -> void:
 		road_visual_parts.append(headlight)
 		headlight.omni_range = 10.0
 		headlight.position = Vector3(x, 0.35, -2.08)
-		vehicle.add_child(headlight)
+		road_visual_root.add_child(headlight)
 
 		var taillight := MeshInstance3D.new()
 		var tail_mesh := BoxMesh.new()
@@ -127,7 +132,7 @@ func _create_vehicle() -> void:
 		taillight.material_override = tail_material
 		road_visual_parts.append(taillight)
 		taillight.position = Vector3(x, 0.35, 2.12)
-		vehicle.add_child(taillight)
+		road_visual_root.add_child(taillight)
 
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
@@ -199,7 +204,7 @@ func _create_jeep_visual() -> void:
 	spare.position = Vector3(0.0, 0.58, 2.08)
 	jeep_visual.add_child(spare)
 	jeep_visual.visible = false
-	vehicle.add_child(jeep_visual)
+	road_visual_root.add_child(jeep_visual)
 
 func _set_vehicle_mode(offroad: bool) -> void:
 	jeep_selected = offroad
@@ -232,6 +237,18 @@ func _process(delta: float) -> void:
 	var speed := absf(vehicle.velocity.length()) * 3.6
 	speed_label.text = "%03d km/h" % int(speed)
 	engine_audio.set_load(clampf(speed / 120.0, 0.0, 1.0))
+	var speed_ratio := clampf(speed / (30.0 if jeep_selected else 42.0), 0.0, 1.0)
+	var steering_input := Input.get_action_strength("steer_right") - Input.get_action_strength("steer_left")
+	var throttle_input := Input.get_action_strength("accelerate")
+	var brake_input := Input.get_action_strength("brake")
+	suspension_phase += delta * (4.0 + speed_ratio * 12.0)
+	var bump_strength := (0.012 if jeep_selected else 0.004) * speed_ratio
+	var suspension_bob := sin(suspension_phase) * bump_strength
+	var target_roll := -steering_input * speed_ratio * (0.075 if jeep_selected else 0.055)
+	var target_pitch := throttle_input * 0.025 - brake_input * 0.045
+	road_visual_root.position.y = lerpf(road_visual_root.position.y, suspension_bob, min(delta * 8.0, 1.0))
+	road_visual_root.rotation.z = lerpf(road_visual_root.rotation.z, target_roll, min(delta * 5.0, 1.0))
+	road_visual_root.rotation.x = lerpf(road_visual_root.rotation.x, target_pitch, min(delta * 5.0, 1.0))
 	var spin := float(vehicle.get("forward_speed")) * delta / (0.47 if not jeep_selected else 0.62)
 	for wheel in road_wheels:
 		wheel.rotate_object_local(Vector3.RIGHT, spin)
