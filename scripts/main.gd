@@ -144,7 +144,8 @@ func _create_jeep_visual() -> void:
 	var body_mesh := BoxMesh.new()
 	body_mesh.size = Vector3(2.15, 0.82, 4.0)
 	body.mesh = body_mesh
-	jeep_paint_material = StandardMaterial3D.new()	jeep_paint_material.albedo_color = Color(0.24, 0.32, 0.18)
+	jeep_paint_material = StandardMaterial3D.new()
+	jeep_paint_material.albedo_color = Color(0.24, 0.32, 0.18)
 	jeep_paint_material.metallic = 0.25
 	jeep_paint_material.roughness = 0.62
 	body.material_override = jeep_paint_material
@@ -487,9 +488,12 @@ func _toggle_garage() -> void:
 	if garage_panel.visible:
 		settings_panel.visible = false
 		garage_camera_angle = 0.0
-		vehicle.set_physics_process(false)
-	else:
-		vehicle.set_physics_process(true)
+	_update_vehicle_pause_state()
+
+func _update_vehicle_pause_state() -> void:
+	if is_instance_valid(vehicle):
+		var ui_is_open := (is_instance_valid(garage_panel) and garage_panel.visible) or (is_instance_valid(settings_panel) and settings_panel.visible)
+		vehicle.set_physics_process(not ui_is_open)
 
 func _apply_vehicle_paint(paint_name: String) -> void:
 	var paint_colors := {
@@ -507,7 +511,7 @@ func _apply_vehicle_paint(paint_name: String) -> void:
 func _select_garage_vehicle(offroad: bool) -> void:
 	_set_vehicle_mode(offroad)
 	garage_panel.visible = false
-	vehicle.set_physics_process(true)
+	_update_vehicle_pause_state()
 	if is_instance_valid(challenge_label):
 		challenge_label.text = "TRAIL JEEP SELECTED" if offroad else "STREET CAR SELECTED"
 
@@ -531,6 +535,6 @@ func _toggle_camera() -> void:
 
 func _toggle_settings() -> void:
 	settings_panel.visible = not settings_panel.visible
-	if settings_panel.visible and garage_panel.visible:
+	if settings_panel.visible:
 		garage_panel.visible = false
-		vehicle.set_physics_process(true)
+	_update_vehicle_pause_state()
