@@ -172,6 +172,12 @@ func _create_hud() -> void:
 	settings_button.pressed.connect(_toggle_settings)
 	top.add_child(settings_button)
 
+	var reset_button := Button.new()
+	reset_button.text = "RESET CAR"
+	reset_button.custom_minimum_size = Vector2(140.0, 58.0)
+	reset_button.pressed.connect(_reset_vehicle)
+	top.add_child(reset_button)
+
 	var camera_button := Button.new()
 	camera_button.text = "CAMERA"
 	camera_button.custom_minimum_size = Vector2(140.0, 58.0)
@@ -292,6 +298,10 @@ func _create_settings_panel(layer: CanvasLayer) -> void:
 	close_button.text = "RESUME DRIVING"
 	close_button.pressed.connect(_toggle_settings)
 	layout.add_child(close_button)
+
+func _reset_vehicle() -> void:
+	if is_instance_valid(vehicle) and vehicle.has_method("_reset_vehicle"):
+		vehicle.call("_reset_vehicle")
 
 func _toggle_camera() -> void:
 	use_cockpit = not use_cockpit
