@@ -3,22 +3,35 @@ class_name EVEETraffic
 
 var traffic_cars: Array[Node3D] = []
 var traffic_speeds: Array[float] = []
+var traffic_directions: Array[float] = []
 var traffic_lanes: Array[float] = [-2.5, 2.5]
 
 func _ready() -> void:
 	for i in range(8):
+		var lane_index := i % 2
+		var sequence_index := floori(float(i) / 2.0)
+		var direction := 1.0 if lane_index == 0 else -1.0
 		var car := _make_car(i)
-		car.position = Vector3(traffic_lanes[i % 2], 0.65, -90.0 - float(i) * 115.0)
+		car.position = Vector3(
+			traffic_lanes[lane_index],
+			0.65,
+			-80.0 - float(sequence_index) * 140.0 if direction > 0.0 else 80.0 + float(sequence_index) * 140.0
+		)
+		car.rotation.y = PI if direction > 0.0 else 0.0
 		add_child(car)
 		traffic_cars.append(car)
 		traffic_speeds.append(8.0 + float(i % 3) * 2.0)
+		traffic_directions.append(direction)
 
 func _process(delta: float) -> void:
 	for i in range(traffic_cars.size()):
 		var car := traffic_cars[i]
-		car.position.z += traffic_speeds[i] * delta
-		if car.position.z > 100.0:
-			car.position.z = -820.0 - float(i) * 34.0
+		var direction := traffic_directions[i]
+		car.position.z += traffic_speeds[i] * direction * delta
+		if direction > 0.0 and car.position.z > 610.0:
+			car.position.z = -610.0 - float(i) * 12.0
+		elif direction < 0.0 and car.position.z < -610.0:
+			car.position.z = 610.0 + float(i) * 12.0
 
 func _make_car(index: int) -> Node3D:
 	var car := Node3D.new()
