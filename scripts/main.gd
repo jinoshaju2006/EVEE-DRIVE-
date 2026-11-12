@@ -237,23 +237,28 @@ func _process(delta: float) -> void:
 	var speed := absf(vehicle.velocity.length()) * 3.6
 	speed_label.text = "%03d km/h" % int(speed)
 	engine_audio.set_load(clampf(speed / 120.0, 0.0, 1.0))
-	var speed_ratio := clampf(speed / (30.0 if jeep_selected else 42.0), 0.0, 1.0)
-	var steering_input := Input.get_action_strength("steer_right") - Input.get_action_strength("steer_left")
-	var throttle_input := Input.get_action_strength("accelerate")
-	var brake_input := Input.get_action_strength("brake")
-	suspension_phase += delta * (4.0 + speed_ratio * 12.0)
-	var bump_strength := (0.012 if jeep_selected else 0.004) * speed_ratio
-	var suspension_bob := sin(suspension_phase) * bump_strength
-	var target_roll := -steering_input * speed_ratio * (0.075 if jeep_selected else 0.055)
-	var target_pitch := throttle_input * 0.025 - brake_input * 0.045
-	road_visual_root.position.y = lerpf(road_visual_root.position.y, suspension_bob, min(delta * 8.0, 1.0))
-	road_visual_root.rotation.z = lerpf(road_visual_root.rotation.z, target_roll, min(delta * 5.0, 1.0))
-	road_visual_root.rotation.x = lerpf(road_visual_root.rotation.x, target_pitch, min(delta * 5.0, 1.0))
-	var spin := float(vehicle.get("forward_speed")) * delta / (0.47 if not jeep_selected else 0.62)
-	for wheel in road_wheels:
-		wheel.rotate_object_local(Vector3.RIGHT, spin)
-	for wheel in jeep_wheels:
-		wheel.rotate_object_local(Vector3.RIGHT, spin)
+	var ui_is_open := (is_instance_valid(garage_panel) and garage_panel.visible) or (is_instance_valid(settings_panel) and settings_panel.visible)
+	if not ui_is_open:
+		var speed_ratio := clampf(speed / (30.0 if jeep_selected else 42.0), 0.0, 1.0)
+		var steering_input := Input.get_action_strength("steer_right") - Input.get_action_strength("steer_left")
+		var throttle_input := Input.get_action_strength("accelerate")
+		var brake_input := Input.get_action_strength("brake")
+		suspension_phase += delta * (4.0 + speed_ratio * 12.0)
+		var bump_strength := (0.012 if jeep_selected else 0.004) * speed_ratio
+		var suspension_bob := sin(suspension_phase) * bump_strength
+		var target_roll := -steering_input * speed_ratio * (0.075 if jeep_selected else 0.055)
+		var target_pitch := throttle_input * 0.025 - brake_input * 0.045
+		road_visual_root.position.y = lerpf(road_visual_root.position.y, suspension_bob, min(delta * 8.0, 1.0))
+		road_visual_root.rotation.z = lerpf(road_visual_root.rotation.z, target_roll, min(delta * 5.0, 1.0))
+		road_visual_root.rotation.x = lerpf(road_visual_root.rotation.x, target_pitch, min(delta * 5.0, 1.0))
+		var spin := float(vehicle.get("forward_speed")) * delta / (0.47 if not jeep_selected else 0.62)
+		for wheel in road_wheels:
+			wheel.rotate_object_local(Vector3.RIGHT, spin)
+		for wheel in jeep_wheels:
+			wheel.rotate_object_local(Vector3.RIGHT, spin)
+	else:
+		road_visual_root.position = road_visual_root.position.lerp(Vector3.ZERO, min(delta * 8.0, 1.0))
+		road_visual_root.rotation = road_visual_root.rotation.lerp(Vector3.ZERO, min(delta * 5.0, 1.0))
 
 	if garage_panel != null and garage_panel.visible:
 		cockpit_camera.current = false
