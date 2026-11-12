@@ -6,6 +6,7 @@ const EngineAudio = preload("res://scripts/engine_audio.gd")
 const SettingsManager = preload("res://scripts/settings_manager.gd")
 const WorldBuilder = preload("res://scripts/world_builder.gd")
 const TrafficManager = preload("res://scripts/traffic_manager.gd")
+const OffroadChallenge = preload("res://scripts/offroad_challenge.gd")
 
 var vehicle: CharacterBody3D
 var follow_camera: Camera3D
@@ -19,12 +20,15 @@ var traffic_manager: Node3D
 var road_visual_parts: Array[Node3D] = []
 var jeep_visual: Node3D
 var jeep_selected := false
+var offroad_challenge: Node
+var challenge_label: Label
 
 func _ready() -> void:
 	settings = SettingsManager.new()
 	add_child(settings)
 	_create_world()
 	_create_traffic()
+	_create_offroad_challenge()
 	_create_vehicle()
 	_create_cameras()
 	_create_audio()
@@ -37,6 +41,12 @@ func _create_traffic() -> void:
 	traffic_manager = TrafficManager.new()
 	traffic_manager.name = "AmbientTraffic"
 	add_child(traffic_manager)
+
+func _create_offroad_challenge() -> void:
+	offroad_challenge = OffroadChallenge.new()
+	offroad_challenge.name = "OffroadHillClimbChallenge"
+	add_child(offroad_challenge)
+	offroad_challenge.progress_changed.connect(_on_challenge_progress)
 
 func _create_vehicle() -> void:
 	vehicle = CharacterBody3D.new()
@@ -263,11 +273,24 @@ func _create_hud() -> void:
 	vehicle_button.pressed.connect(_toggle_vehicle)
 	top.add_child(vehicle_button)
 
+	var challenge_button := Button.new()
+	challenge_button.text = "HILL CLIMB"
+	challenge_button.custom_minimum_size = Vector2(150.0, 58.0)
+	challenge_button.pressed.connect(_start_hill_climb)
+	top.add_child(challenge_button)
+
 	var camera_button := Button.new()
 	camera_button.text = "CAMERA"
 	camera_button.custom_minimum_size = Vector2(140.0, 58.0)
 	camera_button.pressed.connect(_toggle_camera)
 	top.add_child(camera_button)
+
+	challenge_label = Label.new()
+	challenge_label.text = "OFF-ROAD CHALLENGE READY"
+	challenge_label.position = Vector2(24.0, 132.0)
+	challenge_label.add_theme_font_size_override("font_size", 20)
+	challenge_label.add_theme_color_override("font_color", Color(0.2, 0.9, 1.0))
+	layer.add_child(challenge_label)
 
 	_create_touch_controls(layer)
 	_create_settings_panel(layer)
@@ -390,6 +413,14 @@ func _reset_vehicle() -> void:
 
 func _toggle_vehicle() -> void:
 	_set_vehicle_mode(not jeep_selected)
+
+func _start_hill_climb() -> void:
+	_set_vehicle_mode(true)
+	offroad_challenge.start_challenge()
+
+func _on_challenge_progress(message: String) -> void:
+	if is_instance_valid(challenge_label):
+		challenge_label.text = message
 
 func _toggle_camera() -> void:
 	use_cockpit = not use_cockpit
