@@ -7,6 +7,8 @@ const SettingsManager = preload("res://scripts/settings_manager.gd")
 const WorldBuilder = preload("res://scripts/world_builder.gd")
 const TrafficManager = preload("res://scripts/traffic_manager.gd")
 const OffroadChallenge = preload("res://scripts/offroad_challenge.gd")
+const STREET_MODEL = preload("res://assets/vehicles/kenney/sedanSports.glb")
+const OFFROAD_MODEL = preload("res://assets/vehicles/kenney/suv.glb")
 
 var vehicle: CharacterBody3D
 var follow_camera: Camera3D
@@ -25,6 +27,8 @@ var brake_light_materials: Array[StandardMaterial3D] = []
 var jeep_wheels: Array[MeshInstance3D] = []
 var garage_panel: PanelContainer
 var jeep_visual: Node3D
+var street_asset_visual: Node3D
+var offroad_asset_visual: Node3D
 var jeep_selected := false
 var street_paint_material: StandardMaterial3D
 var jeep_paint_material: StandardMaterial3D
@@ -175,6 +179,7 @@ func _create_vehicle() -> void:
 	vehicle.add_child(collision)
 	add_child(vehicle)
 	_create_jeep_visual()
+	_create_vehicle_asset_visuals()
 
 func _create_jeep_visual() -> void:
 	jeep_visual = Node3D.new()
@@ -278,11 +283,26 @@ func _create_jeep_visual() -> void:
 	jeep_visual.visible = false
 	road_visual_root.add_child(jeep_visual)
 
+func _create_vehicle_asset_visuals() -> void:
+	street_asset_visual = STREET_MODEL.instantiate() as Node3D
+	street_asset_visual.name = "KenneySportsSedan"
+	street_asset_visual.position.y = -0.25
+	road_visual_root.add_child(street_asset_visual)
+
+	offroad_asset_visual = OFFROAD_MODEL.instantiate() as Node3D
+	offroad_asset_visual.name = "KenneyTrailSUV"
+	offroad_asset_visual.scale = Vector3(0.88, 0.88, 0.88)
+	offroad_asset_visual.position.y = -0.22
+	offroad_asset_visual.visible = false
+	road_visual_root.add_child(offroad_asset_visual)
+
 func _set_vehicle_mode(offroad: bool) -> void:
 	jeep_selected = offroad
 	for part in road_visual_parts:
-		part.visible = not offroad
-	jeep_visual.visible = offroad
+		part.visible = false
+	jeep_visual.visible = false
+	street_asset_visual.visible = not offroad
+	offroad_asset_visual.visible = offroad
 	if vehicle.has_method("set_offroad_mode"):
 		vehicle.call("set_offroad_mode", offroad)
 
@@ -607,8 +627,24 @@ func _apply_vehicle_paint(paint_name: String) -> void:
 	selected_paint_color = paint_name
 	street_paint_material.albedo_color = paint_colors[paint_name]
 	jeep_paint_material.albedo_color = paint_colors[paint_name]
+	_apply_model_paint(street_asset_visual, paint_colors[paint_name])
+	_apply_model_paint(offroad_asset_visual, paint_colors[paint_name])
 	settings.vehicle_paint = paint_name
 	settings.save_settings()
+
+func _apply_model_paint(root: Node3D, color: Color) -> void:
+	if not is_instance_valid(root):
+		return
+	for node in root.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance.mesh == null:
+			continue
+		for surface in range(mesh_instance.mesh.get_surface_count()):
+			var material := mesh_instance.get_active_material(surface)
+			if material is StandardMaterial3D and material.resource_name.to_lower().contains("paint"):
+				var paint_material := material.duplicate() as StandardMaterial3D
+				paint_material.albedo_color = color
+				mesh_instance.set_surface_override_material(surface, paint_material)
 
 func _select_garage_vehicle(offroad: bool) -> void:
 	_set_vehicle_mode(offroad)
