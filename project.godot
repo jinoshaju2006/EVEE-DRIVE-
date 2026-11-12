@@ -41,3 +41,7 @@ handbrake={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":32)]
 }
+reset_vehicle={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":82)]
+}
