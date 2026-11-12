@@ -308,7 +308,9 @@ func _process(delta: float) -> void:
 		return
 	var speed := absf(vehicle.velocity.length()) * 3.6
 	speed_label.text = "%03d km/h" % int(speed)
-	engine_audio.set_load(clampf(speed / 120.0, 0.0, 1.0))
+	var throttle_load := Input.get_action_strength("accelerate")
+	var speed_load := clampf(speed / (120.0 if not jeep_selected else 90.0), 0.0, 1.0)
+	engine_audio.set_load(clampf(throttle_load * 0.62 + speed_load * 0.38, 0.0, 1.0))
 	var brake_level := Input.get_action_strength("brake")
 	for light_material in brake_light_materials:
 		light_material.emission_energy_multiplier = 0.8 + brake_level * 2.8
