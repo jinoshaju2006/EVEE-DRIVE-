@@ -18,6 +18,9 @@ var engine_audio: Node
 var settings_panel: PanelContainer
 var traffic_manager: Node3D
 var road_visual_parts: Array[Node3D] = []
+var road_wheels: Array[MeshInstance3D] = []
+var jeep_wheels: Array[MeshInstance3D] = []
+var garage_panel: PanelContainer
 var jeep_visual: Node3D
 var jeep_selected := false
 var offroad_challenge: Node
@@ -94,6 +97,7 @@ func _create_vehicle() -> void:
 			wheel.mesh = wheel_mesh
 			wheel.material_override = tire_material
 			road_visual_parts.append(wheel)
+			road_wheels.append(wheel)
 			wheel.rotation.z = PI / 2.0
 			wheel.position = Vector3(x, -0.12, z)
 			vehicle.add_child(wheel)
@@ -175,6 +179,7 @@ func _create_jeep_visual() -> void:
 			wheel_mesh.height = 0.42
 			wheel.mesh = wheel_mesh
 			wheel.material_override = tire_mat
+			jeep_wheels.append(wheel)
 			wheel.rotation.z = PI / 2.0
 			wheel.position = Vector3(x, -0.05, z)
 			jeep_visual.add_child(wheel)
@@ -222,6 +227,11 @@ func _process(delta: float) -> void:
 	var speed := absf(vehicle.velocity.length()) * 3.6
 	speed_label.text = "%03d km/h" % int(speed)
 	engine_audio.set_load(clampf(speed / 120.0, 0.0, 1.0))
+	var spin := float(vehicle.get("forward_speed")) * delta / (0.47 if not jeep_selected else 0.62)
+	for wheel in road_wheels:
+		wheel.rotate_object_local(Vector3.RIGHT, spin)
+	for wheel in jeep_wheels:
+		wheel.rotate_object_local(Vector3.RIGHT, spin)
 
 	if use_cockpit:
 		follow_camera.current = false
@@ -267,11 +277,11 @@ func _create_hud() -> void:
 	reset_button.pressed.connect(_reset_vehicle)
 	top.add_child(reset_button)
 
-	var vehicle_button := Button.new()
-	vehicle_button.text = "JEEP / CAR"
-	vehicle_button.custom_minimum_size = Vector2(150.0, 58.0)
-	vehicle_button.pressed.connect(_toggle_vehicle)
-	top.add_child(vehicle_button)
+	var garage_button := Button.new()
+	garage_button.text = "GARAGE"
+	garage_button.custom_minimum_size = Vector2(130.0, 58.0)
+	garage_button.pressed.connect(_toggle_garage)
+	top.add_child(garage_button)
 
 	var challenge_button := Button.new()
 	challenge_button.text = "HILL CLIMB"
@@ -294,6 +304,7 @@ func _create_hud() -> void:
 
 	_create_touch_controls(layer)
 	_create_settings_panel(layer)
+	_create_garage_panel(layer)
 
 	var hint := Label.new()
 	hint.text = "WASD / Arrow keys to drive • Space for handbrake"
@@ -406,6 +417,53 @@ func _create_settings_panel(layer: CanvasLayer) -> void:
 	close_button.text = "RESUME DRIVING"
 	close_button.pressed.connect(_toggle_settings)
 	layout.add_child(close_button)
+
+
+func _create_garage_panel(layer: CanvasLayer) -> void:
+	garage_panel = PanelContainer.new()
+	garage_panel.visible = false
+	garage_panel.set_anchors_preset(Control.PRESET_CENTER)
+	garage_panel.offset_left = -220.0
+	garage_panel.offset_right = 220.0
+	garage_panel.offset_top = -145.0
+	garage_panel.offset_bottom = 145.0
+	layer.add_child(garage_panel)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 14)
+	garage_panel.add_child(layout)
+
+	var heading := Label.new()
+	heading.text = "EVEE GARAGE"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 26)
+	layout.add_child(heading)
+
+	var car_button := Button.new()
+	car_button.text = "STREET CAR  •  ROAD SETUP"
+	car_button.custom_minimum_size = Vector2(360.0, 64.0)
+	car_button.pressed.connect(func(): _select_garage_vehicle(false))
+	layout.add_child(car_button)
+
+	var jeep_button := Button.new()
+	jeep_button.text = "TRAIL JEEP  •  OFF-ROAD SETUP"
+	jeep_button.custom_minimum_size = Vector2(360.0, 64.0)
+	jeep_button.pressed.connect(func(): _select_garage_vehicle(true))
+	layout.add_child(jeep_button)
+
+	var close_button := Button.new()
+	close_button.text = "CLOSE GARAGE"
+	close_button.pressed.connect(_toggle_garage)
+	layout.add_child(close_button)
+
+func _toggle_garage() -> void:
+	garage_panel.visible = not garage_panel.visible
+
+func _select_garage_vehicle(offroad: bool) -> void:
+	_set_vehicle_mode(offroad)
+	garage_panel.visible = false
+	if is_instance_valid(challenge_label):
+		challenge_label.text = "TRAIL JEEP SELECTED" if offroad else "STREET CAR SELECTED"
 
 func _reset_vehicle() -> void:
 	if is_instance_valid(vehicle) and vehicle.has_method("_reset_vehicle"):
