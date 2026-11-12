@@ -26,6 +26,7 @@ var jeep_selected := false
 var street_paint_material: StandardMaterial3D
 var jeep_paint_material: StandardMaterial3D
 var selected_paint_color := "PURPLE"
+var garage_camera_angle := 0.0
 var offroad_challenge: Node
 var challenge_label: Label
 
@@ -235,7 +236,15 @@ func _process(delta: float) -> void:
 	for wheel in jeep_wheels:
 		wheel.rotate_object_local(Vector3.RIGHT, spin)
 
-	if use_cockpit:
+	if garage_panel != null and garage_panel.visible:
+		cockpit_camera.current = false
+		follow_camera.current = true
+		garage_camera_angle += delta * 0.28
+		var preview_offset := Vector3(sin(garage_camera_angle) * 7.5, 3.0, cos(garage_camera_angle) * 7.5)
+		var preview_target := vehicle.global_position + preview_offset
+		follow_camera.global_position = follow_camera.global_position.lerp(preview_target, min(delta * 3.5, 1.0))
+		follow_camera.look_at(vehicle.global_position + Vector3(0.0, 0.65, 0.0), Vector3.UP)
+	elif use_cockpit:
 		follow_camera.current = false
 		cockpit_camera.current = true
 	else:
@@ -477,6 +486,10 @@ func _toggle_garage() -> void:
 	garage_panel.visible = not garage_panel.visible
 	if garage_panel.visible:
 		settings_panel.visible = false
+		garage_camera_angle = 0.0
+		vehicle.set_physics_process(false)
+	else:
+		vehicle.set_physics_process(true)
 
 func _apply_vehicle_paint(paint_name: String) -> void:
 	var paint_colors := {
