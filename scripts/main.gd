@@ -23,6 +23,9 @@ var jeep_wheels: Array[MeshInstance3D] = []
 var garage_panel: PanelContainer
 var jeep_visual: Node3D
 var jeep_selected := false
+var street_paint_material: StandardMaterial3D
+var jeep_paint_material: StandardMaterial3D
+var selected_paint_color := "PURPLE"
 var offroad_challenge: Node
 var challenge_label: Label
 
@@ -61,11 +64,11 @@ func _create_vehicle() -> void:
 	var body := BoxMesh.new()
 	body.size = Vector3(2.0, 0.65, 4.2)
 	body_mesh.mesh = body
-	var paint := StandardMaterial3D.new()
-	paint.albedo_color = Color(0.22, 0.08, 0.42)
-	paint.metallic = 0.72
-	paint.roughness = 0.24
-	body_mesh.material_override = paint
+	street_paint_material = StandardMaterial3D.new()
+	street_paint_material.albedo_color = Color(0.22, 0.08, 0.42)
+	street_paint_material.metallic = 0.72
+	street_paint_material.roughness = 0.24
+	body_mesh.material_override = street_paint_material
 	road_visual_parts.append(body_mesh)
 	body_mesh.position.y = 0.25
 	vehicle.add_child(body_mesh)
@@ -140,11 +143,10 @@ func _create_jeep_visual() -> void:
 	var body_mesh := BoxMesh.new()
 	body_mesh.size = Vector3(2.15, 0.82, 4.0)
 	body.mesh = body_mesh
-	var paint := StandardMaterial3D.new()
-	paint.albedo_color = Color(0.24, 0.32, 0.18)
-	paint.metallic = 0.25
-	paint.roughness = 0.62
-	body.material_override = paint
+	jeep_paint_material = StandardMaterial3D.new()	jeep_paint_material.albedo_color = Color(0.24, 0.32, 0.18)
+	jeep_paint_material.metallic = 0.25
+	jeep_paint_material.roughness = 0.62
+	body.material_override = jeep_paint_material
 	body.position.y = 0.48
 	jeep_visual.add_child(body)
 
@@ -425,8 +427,8 @@ func _create_garage_panel(layer: CanvasLayer) -> void:
 	garage_panel.set_anchors_preset(Control.PRESET_CENTER)
 	garage_panel.offset_left = -220.0
 	garage_panel.offset_right = 220.0
-	garage_panel.offset_top = -145.0
-	garage_panel.offset_bottom = 145.0
+	garage_panel.offset_top = -205.0
+	garage_panel.offset_bottom = 205.0
 	layer.add_child(garage_panel)
 
 	var layout := VBoxContainer.new()
@@ -451,6 +453,21 @@ func _create_garage_panel(layer: CanvasLayer) -> void:
 	jeep_button.pressed.connect(func(): _select_garage_vehicle(true))
 	layout.add_child(jeep_button)
 
+	var paint_heading := Label.new()
+	paint_heading.text = "PAINT COLOUR"
+	paint_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	layout.add_child(paint_heading)
+
+	var paint_row := HBoxContainer.new()
+	paint_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	for paint_name in ["PURPLE", "BLACK", "WHITE", "RED"]:
+		var paint_button := Button.new()
+		paint_button.text = paint_name
+		paint_button.custom_minimum_size = Vector2(88.0, 52.0)
+		paint_button.pressed.connect(_apply_vehicle_paint.bind(paint_name))
+		paint_row.add_child(paint_button)
+	layout.add_child(paint_row)
+
 	var close_button := Button.new()
 	close_button.text = "CLOSE GARAGE"
 	close_button.pressed.connect(_toggle_garage)
@@ -458,6 +475,21 @@ func _create_garage_panel(layer: CanvasLayer) -> void:
 
 func _toggle_garage() -> void:
 	garage_panel.visible = not garage_panel.visible
+	if garage_panel.visible:
+		settings_panel.visible = false
+
+func _apply_vehicle_paint(paint_name: String) -> void:
+	var paint_colors := {
+		"PURPLE": Color(0.22, 0.08, 0.42),
+		"BLACK": Color(0.025, 0.03, 0.04),
+		"WHITE": Color(0.82, 0.85, 0.88),
+		"RED": Color(0.62, 0.035, 0.025)
+	}
+	if not paint_colors.has(paint_name):
+		return
+	selected_paint_color = paint_name
+	street_paint_material.albedo_color = paint_colors[paint_name]
+	jeep_paint_material.albedo_color = paint_colors[paint_name]
 
 func _select_garage_vehicle(offroad: bool) -> void:
 	_set_vehicle_mode(offroad)
@@ -485,3 +517,5 @@ func _toggle_camera() -> void:
 
 func _toggle_settings() -> void:
 	settings_panel.visible = not settings_panel.visible
+	if settings_panel.visible:
+		garage_panel.visible = false
