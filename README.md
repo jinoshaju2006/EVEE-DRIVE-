@@ -7,7 +7,7 @@ EVEE DRIVE is an Android-focused, open-world 3D driving game project built with 
 - Procedurally generated 1.2 km city-road test area with road markings, buildings, trees and street lights
 - Lightweight ambient traffic cars moving through the test road
 - Off-road dirt field with winding trail, rocky scenery and rolling terrain props
-- Selectable off-road jeep visual with spare wheel and raised body styling
+- Selectable off-road jeep visual with spare wheel, front grille, lamps, side steps and roof rack
 - In-game garage panel for switching between street car and trail jeep
 - Four selectable shared paint colours (saved between sessions): purple, black, white and red
 - Orbiting garage preview camera that pauses driving while inspecting a vehicle; body and wheel motion also freeze cleanly while Garage or Settings is open
@@ -16,7 +16,7 @@ EVEE DRIVE is an Android-focused, open-world 3D driving game project built with 
 - Visual body roll while steering, pitch under acceleration/braking and subtle speed-linked suspension movement
 - Separate off-road driving profile with adjusted speed, acceleration and grip
 - Six-checkpoint hill-climb challenge with progress tracking and completion time
-- Placeholder 3D vehicle with body, wheels, headlights and rear lights
+- Sportier street-car placeholder with front lip, rear spoiler, mirrors, body, wheels, headlights and rear lights
 - Improved acceleration, braking, reverse, steering, lateral grip and handbrake handling
 - Vehicle recovery/reset button and R-key recovery
 - Third-person chase camera and first-person cockpit camera
@@ -25,7 +25,7 @@ EVEE DRIVE is an Android-focused, open-world 3D driving game project built with 
 - Graphics presets: Low, Medium, High and Ultra
 - Frame-rate cap options: 30, 60, 90, 120 and 144 FPS
 - Master audio volume control and saved settings
-- Synthesized engine-tone audio prototype
+- Synthesized engine-tone audio prototype with smoother throttle- and speed-responsive pitch
 
 ## Planned features
 
