@@ -60,6 +60,7 @@ static func build(parent: Node3D) -> void:
 	_add_trees(parent)
 	_add_street_lights(parent)
 	_add_offroad_region(parent)
+	_add_forest_biome(parent)
 
 static func _material(color: Color, roughness: float = 0.8, metallic: float = 0.0) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -264,32 +265,6 @@ static func _add_offroad_region(parent: Node3D) -> void:
 		rock.material_override = rock_mat
 		parent.add_child(rock)
 
-	# Low, collision-backed dirt ramps sit in the open practice area beside the trail.
-	# They are deliberately separate from the checkpoint path so players can explore them.
-	var ramp_material := _material(Color(0.38, 0.27, 0.16), 1.0)
-	var ramp_positions: Array[Vector3] = [
-		Vector3(170.0, 0.55, -78.0),
-		Vector3(170.0, 0.55, 0.0),
-		Vector3(170.0, 0.55, 78.0)
-	]
-	var ramp_angles: Array[float] = [-0.10, 0.09, -0.08]
-	for i in range(ramp_positions.size()):
-		var ramp := StaticBody3D.new()
-		ramp.name = "DrivableDirtRamp_%02d" % (i + 1)
-		ramp.position = ramp_positions[i]
-		ramp.rotation.x = ramp_angles[i]
-		var ramp_mesh := MeshInstance3D.new()
-		var ramp_box := BoxMesh.new()
-		ramp_box.size = Vector3(12.0, 1.1, 22.0)
-		ramp_mesh.mesh = ramp_box
-		ramp_mesh.material_override = ramp_material
-		ramp.add_child(ramp_mesh)
-		var ramp_collision := CollisionShape3D.new()
-		var ramp_shape := BoxShape3D.new()
-		ramp_shape.size = ramp_box.size
-		ramp_collision.shape = ramp_shape
-		ramp.add_child(ramp_collision)
-		parent.add_child(ramp)
 	_add_offroad_ramps(parent)
 
 static func _add_offroad_ramps(parent: Node3D) -> void:
@@ -317,3 +292,150 @@ static func _add_offroad_ramps(parent: Node3D) -> void:
 		ramp_collision.shape = ramp_shape
 		ramp.add_child(ramp_collision)
 		parent.add_child(ramp)
+
+
+static func _add_forest_biome(parent: Node3D) -> void:
+	# A new explorable forest zone connected to the existing dirt area.
+	var forest_floor := StaticBody3D.new()
+	forest_floor.name = "ForestBiomeFloor"
+	var floor_mesh := MeshInstance3D.new()
+	var floor_plane := PlaneMesh.new()
+	floor_plane.size = Vector2(330.0, 260.0)
+	floor_mesh.mesh = floor_plane
+	floor_mesh.position = Vector3(335.0, 0.015, 0.0)
+	floor_mesh.material_override = _material(Color(0.16, 0.24, 0.15), 1.0)
+	forest_floor.add_child(floor_mesh)
+	var floor_collision := CollisionShape3D.new()
+	var floor_shape := BoxShape3D.new()
+	floor_shape.size = Vector3(330.0, 0.2, 260.0)
+	floor_collision.shape = floor_shape
+	floor_collision.position = Vector3(335.0, -0.1, 0.0)
+	forest_floor.add_child(floor_collision)
+	parent.add_child(forest_floor)
+
+	# Connected winding trail: each segment has matching visible dirt and collision.
+	var trail_points: Array[Vector3] = [
+		Vector3(178.0, 0.16, 4.0),
+		Vector3(215.0, 0.16, -12.0),
+		Vector3(252.0, 0.16, -34.0),
+		Vector3(288.0, 0.16, -18.0),
+		Vector3(322.0, 0.16, 12.0),
+		Vector3(356.0, 0.16, 28.0),
+		Vector3(390.0, 0.16, 4.0),
+		Vector3(425.0, 0.16, -24.0),
+		Vector3(458.0, 0.16, -8.0)
+	]
+	var trail_material := _material(Color(0.34, 0.25, 0.15), 1.0)
+	for i in range(trail_points.size() - 1):
+		var a: Vector3 = trail_points[i]
+		var b: Vector3 = trail_points[i + 1]
+		var direction := Vector2(b.x - a.x, b.z - a.z)
+		var segment_length: float = direction.length()
+		var segment := StaticBody3D.new()
+		segment.name = "ForestTrailSegment_%02d" % i
+		var segment_mesh := MeshInstance3D.new()
+		var segment_box := BoxMesh.new()
+		segment_box.size = Vector3(9.0, 0.24, segment_length + 2.0)
+		segment_mesh.mesh = segment_box
+		segment_mesh.position = (a + b) * 0.5
+		segment_mesh.rotation.y = atan2(direction.x, direction.y)
+		segment_mesh.material_override = trail_material
+		segment.add_child(segment_mesh)
+		var segment_collision := CollisionShape3D.new()
+		var segment_shape := BoxShape3D.new()
+		segment_shape.size = segment_box.size
+		segment_collision.shape = segment_shape
+		segment_collision.position = segment_mesh.position
+		segment_collision.rotation.y = segment_mesh.rotation.y
+		segment.add_child(segment_collision)
+		parent.add_child(segment)
+
+	# Low-poly pine forest. Tree trunks share one static body to reduce physics overhead.
+	var trunk_material := _material(Color(0.24, 0.15, 0.09), 1.0)
+	var pine_material_a := _material(Color(0.08, 0.22, 0.13), 0.95)
+	var pine_material_b := _material(Color(0.12, 0.30, 0.17), 0.95)
+	var tree_collisions := StaticBody3D.new()
+	tree_collisions.name = "ForestTreeCollisions"
+	for row in range(6):
+		var z: float = -108.0 + float(row) * 43.0
+		for column in range(14):
+			var x: float = 205.0 + float(column) * 19.0 + float((row % 2) * 7)
+			var variation: float = float((row * 7 + column * 3) % 5)
+			var tree_height: float = 8.0 + variation * 0.7
+			var trunk := MeshInstance3D.new()
+			var trunk_mesh := CylinderMesh.new()
+			trunk_mesh.top_radius = 0.28
+			trunk_mesh.bottom_radius = 0.42
+			trunk_mesh.height = tree_height * 0.55
+			trunk.mesh = trunk_mesh
+			trunk.position = Vector3(x, tree_height * 0.275, z)
+			trunk.material_override = trunk_material
+			parent.add_child(trunk)
+
+			var lower_crown := MeshInstance3D.new()
+			var lower_cone := ConeMesh.new()
+			lower_cone.top_radius = 0.15
+			lower_cone.bottom_radius = 2.7 + variation * 0.18
+			lower_cone.height = tree_height * 0.62
+			lower_crown.mesh = lower_cone
+			lower_crown.position = Vector3(x, tree_height * 0.62, z)
+			lower_crown.material_override = pine_material_a if (row + column) % 2 == 0 else pine_material_b
+			parent.add_child(lower_crown)
+
+			var upper_crown := MeshInstance3D.new()
+			var upper_cone := ConeMesh.new()
+			upper_cone.top_radius = 0.05
+			upper_cone.bottom_radius = 1.9 + variation * 0.12
+			upper_cone.height = tree_height * 0.48
+			upper_crown.mesh = upper_cone
+			upper_crown.position = Vector3(x, tree_height * 0.79, z)
+			upper_crown.material_override = pine_material_b if (row + column) % 2 == 0 else pine_material_a
+			parent.add_child(upper_crown)
+
+			var trunk_collision := CollisionShape3D.new()
+			var trunk_shape := CylinderShape3D.new()
+			trunk_shape.radius = 0.48
+			trunk_shape.height = tree_height * 0.55
+			trunk_collision.shape = trunk_shape
+			trunk_collision.position = Vector3(x, tree_height * 0.275, z)
+			tree_collisions.add_child(trunk_collision)
+	parent.add_child(tree_collisions)
+
+	# Scattered stones add detail without filling the drivable trail.
+	var rock_material := _material(Color(0.27, 0.29, 0.25), 1.0)
+	for i in range(34):
+		var rock := MeshInstance3D.new()
+		var rock_mesh := SphereMesh.new()
+		rock_mesh.radius = 1.0
+		rock_mesh.height = 1.0
+		rock.mesh = rock_mesh
+		var rock_scale: float = 0.55 + float(i % 4) * 0.28
+		var rock_x: float = 205.0 + float((i * 29) % 245)
+		var rock_z: float = -112.0 + float((i * 47) % 225)
+		rock.scale = Vector3(rock_scale * 1.4, rock_scale * 0.8, rock_scale)
+		rock.position = Vector3(rock_x, rock_scale * 0.35, rock_z)
+		rock.material_override = rock_material
+		parent.add_child(rock)
+
+	# Simple trail reflectors mark the bends in low-visibility forest sections.
+	var reflector_post_material := _material(Color(0.72, 0.62, 0.32), 0.45, 0.1)
+	var reflector_material := _material(Color(0.92, 0.94, 0.86), 0.3)
+	for i in range(1, trail_points.size() - 1):
+		var point: Vector3 = trail_points[i]
+		for side_sign in [-1.0, 1.0]:
+			var post := MeshInstance3D.new()
+			var post_mesh := CylinderMesh.new()
+			post_mesh.top_radius = 0.045
+			post_mesh.bottom_radius = 0.07
+			post_mesh.height = 0.9
+			post.mesh = post_mesh
+			post.position = point + Vector3(side_sign * 5.8, 0.45, 0.0)
+			post.material_override = reflector_post_material
+			parent.add_child(post)
+			var reflector := MeshInstance3D.new()
+			var reflector_mesh := BoxMesh.new()
+			reflector_mesh.size = Vector3(0.16, 0.13, 0.08)
+			reflector.mesh = reflector_mesh
+			reflector.position = point + Vector3(side_sign * 5.8, 0.68, 0.0)
+			reflector.material_override = reflector_material
+			parent.add_child(reflector)
