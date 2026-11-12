@@ -16,13 +16,16 @@ EVEE DRIVE is an Android-focused, open-world 3D driving game project built with 
 - Visual body roll while steering, pitch under acceleration/braking and subtle speed-linked suspension movement
 - Separate off-road driving profile with adjusted speed, acceleration and grip
 - Six-checkpoint hill-climb challenge with progress tracking and completion time
-- Sportier street-car placeholder with front lip, rear spoiler, mirrors, body, wheels, headlights and rear lights
+- Kenney CC0 sports-sedan and SUV models integrated into the player garage selection
+- Five-model mixed ambient traffic set (sports sedan, race car, SUV, truck and van)
+- Original procedural vehicle visuals retained as fallback reference geometry
 - Improved acceleration, braking, reverse, steering, lateral grip and handbrake handling
 - Vehicle recovery/reset button and R-key recovery
 - Third-person chase camera and first-person cockpit camera
 - On-screen mobile steering, accelerator, brake and handbrake controls
 - Speed display
-- Graphics presets: Low, Medium, High and Ultra
+- Balanced graphics default (Medium), with Low, Medium, High and Ultra presets
+- Medium-sized connected map target: city road, off-road training area and forest trail
 - Frame-rate cap options: 30, 60, 90, 120 and 144 FPS
 - Master audio volume control and saved settings
 - Synthesized engine-tone audio prototype with smoother throttle- and speed-responsive pitch
@@ -63,4 +66,4 @@ The 144 FPS option sets a frame-rate cap. It does not guarantee 144 FPS on every
 
 ## Development status
 
-This repository contains an early driving-game prototype with a generated city-road scene and ambient traffic. It has not yet been imported, run, profiled or exported to an APK in this development session. Do not treat it as a finished game or release build.
+This repository contains an early driving-game prototype with a generated medium-sized city/off-road/forest scene, licensed Kenney vehicle models and ambient traffic. It has not yet been imported, run, profiled or exported to an APK in this development session. Do not treat it as a finished game or release build.
