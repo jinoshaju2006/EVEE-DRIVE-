@@ -44,6 +44,9 @@ var selected_paint_color := "PURPLE"
 var garage_camera_angle := 0.0
 var offroad_challenge: Node
 var challenge_label: Label
+var indicator_status_label: Label
+var left_indicator_on := false
+var right_indicator_on := false
 
 func _ready() -> void:
 	settings = SettingsManager.new()
@@ -461,47 +464,90 @@ func _create_hud() -> void:
 
 	challenge_label = Label.new()
 	challenge_label.text = "OFF-ROAD CHALLENGE READY"
-	challenge_label.position = Vector2(24.0, 132.0)
-	challenge_label.add_theme_font_size_override("font_size", 20)
+	challenge_label.position = Vector2(24.0, 94.0)
+	challenge_label.add_theme_font_size_override("font_size", 18)
 	challenge_label.add_theme_color_override("font_color", Color(0.2, 0.9, 1.0))
 	layer.add_child(challenge_label)
+
+	indicator_status_label = Label.new()
+	indicator_status_label.text = "SIGNALS: OFF"
+	indicator_status_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	indicator_status_label.offset_left = -90.0
+	indicator_status_label.offset_right = 90.0
+	indicator_status_label.offset_top = 78.0
+	indicator_status_label.offset_bottom = 108.0
+	indicator_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	indicator_status_label.add_theme_font_size_override("font_size", 16)
+	indicator_status_label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.18))
+	layer.add_child(indicator_status_label)
+
+	var signal_row := HBoxContainer.new()
+	signal_row.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	signal_row.offset_left = -180.0
+	signal_row.offset_right = 180.0
+	signal_row.offset_top = 112.0
+	signal_row.offset_bottom = 166.0
+	signal_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	layer.add_child(signal_row)
+	var left_signal := Button.new()
+	left_signal.text = "◀ SIGNAL"
+	left_signal.toggle_mode = true
+	left_signal.custom_minimum_size = Vector2(108.0, 48.0)
+	left_signal.toggled.connect(_set_left_indicator)
+	signal_row.add_child(left_signal)
+	var hazard_signal := Button.new()
+	hazard_signal.text = "HAZARD"
+	hazard_signal.custom_minimum_size = Vector2(108.0, 48.0)
+	hazard_signal.pressed.connect(_toggle_hazards)
+	signal_row.add_child(hazard_signal)
+	var right_signal := Button.new()
+	right_signal.text = "SIGNAL ▶"
+	right_signal.toggle_mode = true
+	right_signal.custom_minimum_size = Vector2(108.0, 48.0)
+	right_signal.toggled.connect(_set_right_indicator)
+	signal_row.add_child(right_signal)
 
 	_create_touch_controls(layer)
 	_create_settings_panel(layer)
 	_create_garage_panel(layer)
 
 	var hint := Label.new()
-	hint.text = "WASD / Arrow keys to drive • Space for handbrake"
-	hint.position = Vector2(24.0, 92.0)
+	hint.text = "TOUCH CONTROLS  •  WASD / ARROWS SUPPORTED"
+	hint.position = Vector2(24.0, 68.0)
+	hint.add_theme_font_size_override("font_size", 14)
 	hint.add_theme_color_override("font_color", Color(0.9, 0.92, 1.0, 0.8))
 	layer.add_child(hint)
 
 func _create_touch_controls(layer: CanvasLayer) -> void:
+	# Large, edge-anchored touch controls remain visible at landscape resolutions.
 	var steering := HBoxContainer.new()
 	steering.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	steering.offset_left = 24.0
+	steering.offset_top = -124.0
+	steering.offset_right = 224.0
 	steering.offset_bottom = -24.0
-	steering.add_child(MobileControls.make_hold_button("◀", "steer_left", Vector2(94.0, 88.0)))
-	steering.add_child(MobileControls.make_hold_button("▶", "steer_right", Vector2(94.0, 88.0)))
+	steering.add_theme_constant_override("separation", 10)
+	steering.add_child(MobileControls.make_hold_button("◀", "steer_left", Vector2(94.0, 92.0)))
+	steering.add_child(MobileControls.make_hold_button("▶", "steer_right", Vector2(94.0, 92.0)))
 	layer.add_child(steering)
 
 	var pedals := VBoxContainer.new()
 	pedals.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	pedals.offset_left = -164.0
+	pedals.offset_top = -188.0
 	pedals.offset_right = -24.0
 	pedals.offset_bottom = -24.0
-	pedals.add_child(MobileControls.make_hold_button("ACCEL", "accelerate", Vector2(132.0, 82.0)))
-	pedals.add_child(MobileControls.make_hold_button("BRAKE", "brake", Vector2(132.0, 76.0)))
+	pedals.add_theme_constant_override("separation", 8)
+	pedals.add_child(MobileControls.make_hold_button("ACCEL", "accelerate", Vector2(140.0, 82.0)))
+	pedals.add_child(MobileControls.make_hold_button("BRAKE", "brake", Vector2(140.0, 74.0)))
 	layer.add_child(pedals)
 
-	var handbrake_button := MobileControls.make_hold_button("HANDBRAKE", "handbrake", Vector2(132.0, 58.0))
-	handbrake_button.anchor_left = 1.0
-	handbrake_button.anchor_right = 1.0
-	handbrake_button.anchor_top = 1.0
-	handbrake_button.anchor_bottom = 1.0
-	handbrake_button.offset_left = -170.0
-	handbrake_button.offset_right = -24.0
-	handbrake_button.offset_top = -240.0
-	handbrake_button.offset_bottom = -176.0
+	var handbrake_button := MobileControls.make_hold_button("HANDBRAKE", "handbrake", Vector2(132.0, 54.0))
+	handbrake_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	handbrake_button.offset_left = -306.0
+	handbrake_button.offset_right = -164.0
+	handbrake_button.offset_top = -84.0
+	handbrake_button.offset_bottom = -24.0
 	layer.add_child(handbrake_button)
 
 func _create_settings_panel(layer: CanvasLayer) -> void:
@@ -707,6 +753,36 @@ func _on_challenge_progress(message: String) -> void:
 
 func _toggle_camera() -> void:
 	use_cockpit = not use_cockpit
+
+func _set_left_indicator(enabled: bool) -> void:
+	left_indicator_on = enabled
+	if enabled:
+		right_indicator_on = false
+	_update_indicator_status()
+
+func _set_right_indicator(enabled: bool) -> void:
+	right_indicator_on = enabled
+	if enabled:
+		left_indicator_on = false
+	_update_indicator_status()
+
+func _toggle_hazards() -> void:
+	var enable_hazards := not (left_indicator_on and right_indicator_on)
+	left_indicator_on = enable_hazards
+	right_indicator_on = enable_hazards
+	_update_indicator_status()
+
+func _update_indicator_status() -> void:
+	if not is_instance_valid(indicator_status_label):
+		return
+	if left_indicator_on and right_indicator_on:
+		indicator_status_label.text = "HAZARD LIGHTS: ON"
+	elif left_indicator_on:
+		indicator_status_label.text = "LEFT INDICATOR: ON"
+	elif right_indicator_on:
+		indicator_status_label.text = "RIGHT INDICATOR: ON"
+	else:
+		indicator_status_label.text = "SIGNALS: OFF"
 
 func _toggle_settings() -> void:
 	settings_panel.visible = not settings_panel.visible
